@@ -156,10 +156,8 @@ Document.prototype['close'] = Document.prototype.close
 
 # A connection to a sharejs server
 class Connection
-	constructor: (host, port, basePath) ->
-		resource = if basePath then path + '/socket.io' else 'socket.io'
-
-		@socket = new io['Socket'] host, {port:port, resource:resource}
+	constructor: (origin) ->
+		@socket = io['connect'] origin
 
 		@socket['on'] 'connect', @connected
 		@socket['on'] 'disconnect', @disconnected
@@ -304,20 +302,17 @@ MicroEvent.mixin Connection
 # This is a private connection pool for implicitly created connections.
 connections = {}
 
-getConnection = (host, port, basePath) ->
+getConnection = (origin) ->
 	if WEB?
-		host ?= window.location.hostname
-		port ?= window.location.port
+		location = window.location
+		origin ?= "#{location.protocol}//#{location.hostname}/sharejs"
 	
-	address = host
-	address += ":#{port}" if port?
-
-	unless connections[address]
-		c = new Connection(host, port, basePath)
-		c.on 'disconnected', -> delete connections[address]
-		connections[address] = c
+	unless connections[origin]
+		c = new Connection origin
+		c.on 'disconnected', -> delete connections[origin]
+		connections[origin] = c
 	
-	connections[address]
+	connections[origin]
 
 # Open a document with the given name. The connection is created implicitly and reused.
 #

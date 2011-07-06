@@ -1,11 +1,11 @@
 # This implements the socketio-based network API for ShareJS.
 #
-# This is the frontend used by the javascript client implementation.
+# This is the frontend used by the javascript socket implementation.
 #
 # See documentation for this protocol is in doc/protocol.md
 # Tests are in test/socketio.coffee
 
-io = require 'socket.io'
+socketio = require 'socket.io'
 util = require 'util'
 
 p = -> #util.debug
@@ -15,11 +15,11 @@ i = -> #util.inspect
 #
 # Options = {}
 exports.attach = (server, model, options) ->
-	socket = io.listen server, {log: null}
+	io = socketio.listen server, {log: null}
 
-	socket.on 'connection', (client) ->
-		# There seems to be a bug in socket.io where client.request isn't set sometimes.
-		p "New client connected from #{client.request.socket.remoteAddress} with sessionId #{client.sessionId}" if client.request?
+	io.of('/sharejs').on 'connection', (socket) ->
+		# There seems to be a bug in socket.io where socket.request isn't set sometimes.
+		p "New socket connected from #{socket.request.socket.remoteAddress} with id #{socket.id}" if socket.request?
 
 		lastSentDoc = null
 		lastReceivedDoc = null
@@ -27,7 +27,7 @@ exports.attach = (server, model, options) ->
 		# Map from docName -> {listener:fn, queue:[msg], busy:bool}
 		docState = {}
 
-		# Send a message to the client.
+		# Send a message to the socket.
 		# msg _must_ have the doc:DOCNAME property set. We'll remove it if its the same as lastReceivedDoc.
 		send = (msg) ->
 			if msg.doc == lastSentDoc
@@ -36,21 +36,21 @@ exports.attach = (server, model, options) ->
 				lastSentDoc = msg.doc
 
 			p "Sending #{i msg}"
-			client.send msg
+			socket.json.send msg
 
 		# Open the given document name, at the requested version.
 		# callback(opened at version, [error])
 		open = (docName, version, callback) ->
 			callback null, 'Doc already opened' if docState[docName].listener?
-			p "Registering listener on #{docName} by #{client.sessionId} at #{version}"
+			p "Registering listener on #{docName} by #{socket.id} at #{version}"
 
 			docState[docName].listener = listener = (opData) ->
 				throw new Error 'Consistency violation - doc listener invalid' unless docState[docName].listener == listener
 
 				p "listener doc:#{docName} opdata:#{i opData} v:#{version}"
 
-				# Skip the op if this client sent it.
-				return if opData.meta?.source == client.sessionId != undefined
+				# Skip the op if this socket sent it.
+				return if opData.meta?.source == socket.id != undefined
 
 				opMsg =
 					doc: docName
@@ -68,11 +68,11 @@ exports.attach = (server, model, options) ->
 				return
 			
 			if version?
-				# Tell the client the doc is open at the requested version
-				model.clientListenFromVersion client, docName, version, listener, openedAt
+				# Tell the socket the doc is open at the requested version
+				model.clientListenFromVersion socket, docName, version, listener, openedAt
 			else
 				# If the version is blank, we'll open the doc at the most recent version
-				model.clientListen client, docName, listener, openedAt
+				model.clientListen socket, docName, listener, openedAt
 
 		# Close the named document.
 		# callback([error])
@@ -123,7 +123,7 @@ exports.attach = (server, model, options) ->
 					msg.create = false
 					step2Snapshot()
 				else
-					model.clientCreate client, docName, query.type, query.meta || {}, (result, errorMsg) ->
+					model.clientCreate socket, docName, query.type, query.meta || {}, (result, errorMsg) ->
 						if errorMsg? and errorMsg != 'Document already exists'
 							fail errorMsg
 							return
@@ -131,7 +131,7 @@ exports.attach = (server, model, options) ->
 						msg.create = result
 						step2Snapshot()
 
-			# The client requested a document snapshot
+			# The socket requested a document snapshot
 			step2Snapshot = ->
 				# Skip inserting a snapshot if the document was just created.
 				if query.snapshot != null or msg.create == true
@@ -166,7 +166,7 @@ exports.attach = (server, model, options) ->
 					else
 						# + Should fail if the type is wrong.
 
-						p "Opened #{docName} at #{version} by #{client.sessionId}"
+						p "Opened #{docName} at #{version} by #{socket.id}"
 						msg.open = true
 						msg.v = version
 						finish()
@@ -177,7 +177,7 @@ exports.attach = (server, model, options) ->
 
 			docData = undefined
 			if query.snapshot == null or (query.open == true and query.type)
-				model.clientGetSnapshot client, query.doc, (d, errorMsg) ->
+				model.clientGetSnapshot socket, query.doc, (d, errorMsg) ->
 					if errorMsg? and errorMsg != 'Document does not exist'
 						fail errorMsg
 						return
@@ -187,7 +187,7 @@ exports.attach = (server, model, options) ->
 			else
 				step1Create()
 
-		# The client closes a document
+		# The socket closes a document
 		handleClose = (query, callback) ->
 			close query.doc, (error) ->
 				if error
@@ -198,18 +198,18 @@ exports.attach = (server, model, options) ->
 
 				callback()
 
-		# We received an op from the client
+		# We received an op from the socket
 		handleOp = (query, callback) ->
 			throw new Error 'No docName specified' unless query.doc?
 			throw new Error 'No version specified' unless query.v?
 
 			op_data = {v:query.v, op:query.op}
 			op_data.meta = query.meta || {}
-			op_data.meta.source = client.sessionId
+			op_data.meta.source = socket.id
 
-			model.clientSubmitOp client, query.doc, op_data, (appliedVersion, error) ->
+			model.clientSubmitOp socket, query.doc, op_data, (appliedVersion, error) ->
 				msg = if error?
-					p "Sending error to client: #{error}"
+					p "Sending error to socket: #{error}"
 					{doc:query.doc, v:null, error: error}
 				else
 					{doc:query.doc, v:appliedVersion}
@@ -237,7 +237,7 @@ exports.attach = (server, model, options) ->
 					# request. They're all handled together.
 					handleOpenCreateSnapshot query, callback
 
-				else if query.op? # The client is applying an op.
+				else if query.op? # The socket is applying an op.
 					handleOp query, callback
 
 				else
@@ -245,16 +245,16 @@ exports.attach = (server, model, options) ->
 
 			catch error
 				util.debug error.stack
-				# ... And disconnect the client?
+				# ... And disconnect the socket?
 				callback()
 		
 		# And now the actual message handler.
 		messageListener = (query) ->
 			# There seems to be a bug in socket.io where messages are detected
-			# after the client disconnects.
+			# after the socket disconnects.
 			if docState == null
-				console.log "WARNING: received query from client after the client disconnected."
-				console.log client
+				console.log "WARNING: received query from socket after the socket disconnected."
+				console.log socket
 				return
 
 			try
@@ -276,14 +276,14 @@ exports.attach = (server, model, options) ->
 			docState[query.doc].queue.push query
 			flush docState[query.doc]
 
-		client.on 'message', messageListener
-		client.on 'disconnect', ->
-			p "client #{client.sessionId} disconnected"
+		socket.on 'message', messageListener
+		socket.on 'disconnect', ->
+			p "socket #{socket.id} disconnected"
 			for docName, state of docState
 				state.busy = true
 				state.queue = []
 				model.removeListener docName, state.listener if state.listener?
-			client.removeListener 'message', messageListener
+			socket.removeListener 'message', messageListener
 			docState = null
 	
 	server
