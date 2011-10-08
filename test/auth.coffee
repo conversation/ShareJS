@@ -215,12 +215,13 @@ genTests = (async) -> testCase
 			action.accept()
 
 		@model.clientSubmitOp @client, @name, {v:0, op:{position:0, text:'hi'}}, (result, error) =>
-			test.strictEqual result, 0
+			test.strictEqual result.v, 0
+			test.deepEqual result.op, {position:0, text:'hi'}
 			test.fail error if error
 
 			@model.getVersion @name, (v) ->
 				test.strictEqual v, 1
-				test.expect 8
+				test.expect 9
 				test.done()
 	
 	'applyOps doesnt work if rejected': (test) ->

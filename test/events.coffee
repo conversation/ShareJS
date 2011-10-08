@@ -67,9 +67,10 @@ module.exports = testCase
 				{position:0, text:'Hi'}
 			], (error, _) =>
 				test.ifError(error)
-				@model.applyOp @name, {v:1, op:{position:0, text:'hi2'}}, (v, error) ->
+				@model.applyOp @name, {v:1, op:{position:0, text:'hi2'}}, (data, error) ->
 					test.strictEqual undefined, error
-					test.strictEqual v, 2
+					test.strictEqual data.v, 2
+					test.deepEqual data.op, {position:0, text:'hi2'}
 	
 	'emit events when ops are applied to an existing document': (test) ->
 		applyOps @model, @name, 0, [{position:0, text:'A'}, {position:0, text:'Hi'}], (error, _) =>

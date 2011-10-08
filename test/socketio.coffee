@@ -225,7 +225,7 @@ module.exports = testCase
 
 	'get a document snapshot': (test) ->
 		@model.create @name, 'simple', =>
-			@model.applyOp @name, {v:0, op:{position:0, text:'internet'}}, (error, _) =>
+			@model.applyOp @name, {v:0, op:{position:0, text:'internet'}}, (_, error) =>
 				test.ifError(error)
 
 				@socket.json.send {doc:@name, snapshot:null}
@@ -243,9 +243,9 @@ module.exports = testCase
 		@expect [{doc:name1, open:true, create:true, v:0}, {open:false}, {doc:name2, open:true, create:true, v:0}], =>
 			# name1 should be closed, and name2 should be open.
 			# We should only get the op for name2.
-			@model.applyOp name1, {v:0, op:{position:0, text:'Blargh!'}}, (error, appliedVersion) ->
+			@model.applyOp name1, {v:0, op:{position:0, text:'Blargh!'}}, (op, error) ->
 				test.ifError(error)
-			@model.applyOp name2, {v:0, op:[{i:'hi', p:0}]}, (error, appliedVersion) ->
+			@model.applyOp name2, {v:0, op:[{i:'hi', p:0}]}, (op, error) ->
 				test.ifError(error)
 
 			@expect {v:0, op:[{i:'hi', p:0}], meta:ANYOBJECT}, ->

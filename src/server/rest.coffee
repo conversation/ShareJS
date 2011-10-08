@@ -114,11 +114,11 @@ router = (app, model, options) ->
 		else
 			expectJSONObject req, res, (obj) ->
 				opData = {v:version, op:obj, meta:{source:req.socket.remoteAddress}}
-				model.clientSubmitOp req._client, req.params.name, opData, (newVersion, error) ->
+				model.clientSubmitOp req._client, req.params.name, opData, (opdata, error) ->
 					if error?
 						sendError res, error
 					else
-						sendJSON res, {v:newVersion}
+						sendJSON res, {v:opdata.v}
 
 	app.delete '/doc/:name', auth, (req, res) ->
 		model.clientDelete req._client, req.params.name, (result, error) ->

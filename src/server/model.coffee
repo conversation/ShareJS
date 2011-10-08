@@ -73,7 +73,7 @@ module.exports = Model = (db, options) ->
 	queues = {} # docName -> syncQueue
 
 	# Apply an op to the specified document.
-	# The callback is passed (applied version #, error)
+	# The callback is passed (transformed op data, error)
 	# opData = {op:op, v:v, meta:metadata}
 	# 
 	# Ops are queued before being applied so that the following code applies op C before op B:
@@ -112,7 +112,7 @@ module.exports = Model = (db, options) ->
 					db.append docName, newOpData, newDocData, ->
 						p "appended v#{opVersion} to #{docName}. Calling callback..."
 						events.onApplyOp docName, newOpData
-						callback opVersion, undefined
+						callback newOpData, undefined
 
 				if opVersion > version
 					callback null, 'Op at future version'
