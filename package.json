@@ -5,7 +5,7 @@
 	"keywords": ["operational transformation", "ot", "concurrent", "collaborative", "database", "server"],
 	"homepage": "",
 	"author": "Joseph Gentle <josephg@gmail.com>",
-	"main": "lib/index.js",
+	"main": "index.js",
 	"bin": {
 		"sharejs": "bin/sharejs",
 		"sharejs-exampleserver": "bin/exampleserver"
@@ -16,11 +16,11 @@
 		"connect": ">= 1.1.1 < 2.0.0",
 		"optimist": ">= 0.2.4",
 		"uglify-js": "~1",
+		"coffee-script": "> 1.1.0"
 		"hat": "*"
 	},
 	"devDependencies": {
-		"nodeunit": "~0.5.0",
-		"coffee-script": "> 1.1.0"
+		"nodeunit": "~0.5.0"
 	},
 	"engine": "node >= 0.4.4",
 	"scripts": {
