@@ -807,7 +807,7 @@
           }
           return callback(null, error);
         } else {
-          doc.on('closing', function() {
+          doc.on('closed', function() {
             c.numDocs--;
             if (c.numDocs === 0) {
               return c.disconnect();
