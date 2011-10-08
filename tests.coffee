@@ -20,10 +20,10 @@ modules = [
 	'auth'
 	'events'
 	'rest'
-	'socketio'
+#	'socketio'
 
 	'microevent'
-	'client'
+#	'client'
 
 	'integration'
 ]
