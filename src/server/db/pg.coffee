@@ -39,7 +39,8 @@ module.exports = PgDb = (options) ->
   options ?= {}
   options[k] ?= v for k, v of defaultOptions
 
-  client = options.client or new pg.Client options.uri
+  client = options.client or new pg.Client options
+
   client.connect()
 
   snapshot_table = options.schema and "#{options.schema}.#{options.snapshot_table}" or options.snapshot_table
