@@ -18,7 +18,7 @@
     "uglify-js": "~1",
     "request": ">= 2.1.1",
     "coffee-script": "*",
-    "browserchannel": "*",
+    "browserchannel": "git://github.com/conversation/node-browserchannel.git",
     "hat": "*"
   },
   "devDependencies": {
