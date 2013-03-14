@@ -16,7 +16,7 @@
     "connect": ">= 1.1.1 < 2.0.0",
     "optimist": ">= 0.2.4",
     "uglify-js": "~1",
-    "request": ">= 2.1.1",
+    "request": ">= 2.1.1 < 2.16.0",
     "coffee-script": "> 1.1.0",
     "browserchannel": "git://github.com/conversation/node-browserchannel.git",
     "hat": "*"
