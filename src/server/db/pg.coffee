@@ -203,8 +203,8 @@ module.exports = PgDb = (options) ->
 
   @writeOp = (docName, opData, callback) ->
     sql = """
-      INSERT INTO #{operations_table} ("doc", "op", "v", "meta")
-        VALUES ($1, $2, $3, $4)
+      INSERT INTO #{operations_table} ("doc", "op", "v", "meta", "created_at")
+        VALUES ($1, $2, $3, $4, now() at time zone 'UTC')
     """
     values = [docName, JSON.stringify(opData.op), opData.v, JSON.stringify(opData.meta)]
     client.query sql, values, (error, result) ->
