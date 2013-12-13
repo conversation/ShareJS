@@ -69,6 +69,7 @@ module.exports = PgDb = (options) ->
         v int4 NOT NULL,
         op text NOT NULL,
         meta text NOT NULL,
+        created_at timestamp(6),
         CONSTRAINT operations_pkey PRIMARY KEY (doc, v)
       );
     """
