@@ -173,6 +173,7 @@ module.exports = PgDb = (options) ->
       DELETE FROM #{operations_table}
       WHERE "doc" = $1
       AND v < $2
+      AND created_at < now() at time zone 'UTC' - interval '1 hour'
       RETURNING *
     """
     values = [docName, docData.v]
