@@ -79,6 +79,10 @@ module.exports = (model, options) ->
       @doAuth {docName}, 'get version', callback, ->
         model.getVersions docName, v, callback
 
+    getSnapshotVersion: (docName, version, callback) ->
+      @doAuth {docName}, 'get snapshot', callback, ->
+        model.getSnapshotVersion docName, version, callback
+
     create: (docName, type, meta, callback) ->
       # We don't check that types[type.name] == type. That might be important at some point.
       type = types[type] if typeof type == 'string'
