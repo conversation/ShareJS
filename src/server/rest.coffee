@@ -99,6 +99,21 @@ matchDocNameWithVersions = (urlString, base) ->
   parts = urlParts.pathname.match(new RegExp("^#{base}\/doc\/(?:([^\/]+?))\/versions\/?$", "i"))
   return {name: parts[1], every: parseInt(urlParts.query.every)} if parts
 
+# match a version number from the query string of a URL
+# For example:
+#   > matchVersion 'http://example.com/?v=10'
+#   10
+#   > matchVersion 'http://example.com/'
+#   10
+#   > matchDocName 'hello'
+#   undefined
+matchVersion = (urlString) ->
+  urlParts = url.parse urlString
+  regexp = new RegExp("v=(\\d+)")
+  if urlParts.query
+    parts = urlParts.query.match(regexp)
+    return parseInt(parts[1]) if parts
+
 # prepare data for createClient. If createClient success, then we pass client
 # together with req and res into the callback. Otherwise, stop the flow right
 # here and send error back
@@ -121,7 +136,7 @@ auth = (req, res, createClient, cb) ->
 # GET returns the document snapshot. The version and type are sent as headers.
 # I'm not sure what to do with document metadata - it is inaccessable for now.
 getDocument = (req, res, client) ->
-  client.getSnapshot req.params.name, (error, doc) ->
+  resultCallback = (error, req, res, doc) ->
     if doc
       res.setHeader 'X-OT-Type', doc.type.name
       res.setHeader 'X-OT-Version', doc.v
@@ -137,6 +152,12 @@ getDocument = (req, res, client) ->
         sendError res, error, true
       else
         sendError res, error
+  if req.params.version || req.params.version == 0
+    client.getSnapshotVersion req.params.name, req.params.version, (error, doc) ->
+      resultCallback(error, req, res, doc)
+  else
+    client.getSnapshot req.params.name, (error, doc) ->
+      resultCallback(error, req, res, doc)
 
 # GET returns the document versions.
 getDocumentVersions = (req, res, client) ->
@@ -201,6 +222,9 @@ makeDispatchHandler = (createClient, options) ->
     if name = matchDocName(req.url, options.base)
       req.params or= {}
       req.params.name = name
+      version = matchVersion(req.url)
+      unless version == undefined
+        req.params.version = version
       switch req.method
         when 'GET', 'HEAD' then auth req, res, createClient, getDocument
         when 'PUT' then auth req, res, createClient, putDocument
