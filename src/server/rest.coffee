@@ -20,7 +20,7 @@ sendError = (res, message, head = false) ->
       send403 res, ""
     else
       send403 res
-  else if message == 'Document does not exist'
+  else if message == 'Document does not exist' || 'operations missing in DB'
     if head
       send404 res, ""
     else
