@@ -120,6 +120,28 @@ module.exports = PgDb = (options) ->
       else
         callback? error?.message
 
+  @getSnapshotLessThanOrEqualTo = (docName, v, callback) ->
+    sql = """
+      SELECT *
+      FROM #{snapshot_table}
+      WHERE "doc" = $1 AND "v" <= $2
+      ORDER BY "v" DESC
+      LIMIT 1
+    """
+    client.query sql, [docName, v], (error, result) ->
+      if !error? and result.rows.length > 0
+        row = result.rows[0]
+        data =
+          v:        row.v
+          snapshot: JSON.parse(row.snapshot)
+          meta:     JSON.parse(row.meta)
+          type:     row.type
+        callback? null, data
+      else if !error?
+        callback? "Document does not exist"
+      else
+        callback? error?.message
+
   @getSnapshot = (docName, callback) ->
     sql = """
       SELECT *
