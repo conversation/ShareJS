@@ -61,8 +61,8 @@ module.exports = PgDb = (options) ->
         doc text NOT NULL,
         v int4 NOT NULL,
         type text NOT NULL,
-        snapshot text NOT NULL,
-        meta text NOT NULL,
+        snapshot json NOT NULL,
+        meta json NOT NULL,
         created_at timestamp(6) NOT NULL,
         CONSTRAINT snapshots_pkey PRIMARY KEY (doc, v)
       );
@@ -70,8 +70,8 @@ module.exports = PgDb = (options) ->
       CREATE TABLE #{operations_table} (
         doc text NOT NULL,
         v int4 NOT NULL,
-        op text NOT NULL,
-        meta text NOT NULL,
+        op json NOT NULL,
+        meta json NOT NULL,
         created_at timestamp(6) NOT NULL,
         CONSTRAINT operations_pkey PRIMARY KEY (doc, v)
       );
@@ -137,8 +137,8 @@ module.exports = PgDb = (options) ->
         row = result.rows[0]
         data =
           v:        row.v
-          snapshot: JSON.parse(row.snapshot)
-          meta:     JSON.parse(row.meta)
+          snapshot: row.snapshot
+          meta:     row.meta
           type:     row.type
         callback? null, data
       else if !error?
@@ -197,9 +197,9 @@ module.exports = PgDb = (options) ->
       if !error?
         data = result.rows.map (row) ->
           return {
-            op:   JSON.parse row.op
+            op:   row.op
             # v:    row.version
-            meta: JSON.parse row.meta
+            meta: row.meta
           }
         callback? null, data
       else
