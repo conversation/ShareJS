@@ -5,6 +5,7 @@
 http = require 'http'
 url  = require 'url'
 nameregexes = {}
+snapshotregexes = {}
 
 send403 = (res, message = 'Forbidden\n') ->
   res.writeHead 403, {'Content-Type': 'text/plain'}
@@ -82,6 +83,26 @@ matchDocName = (urlString, base) ->
   parts = urlParts.pathname.match nameregexes[base]
   return parts[1] if parts
 
+# match a doc path by its url, but only if it's followed by "/snapshots"
+# For example:
+#   > matchDocName '/doc/testdocument'
+#   undefined
+#   > matchDocName '/doc/testdocument/snapshots'
+#   'testdocument'
+#   > matchDocName '/document/test'
+#   undefined
+#   > matchDocName '/hello_world'
+#   undefined
+matchDocNameWithSnapshots = (urlString, base) ->
+  if !snapshotregexes[base]?
+    base ?= ""
+    base = base[...-1] if base[base.length - 1] == "/"
+    snapshotregexes[base] = new RegExp("^#{base}\/doc\/(?:([^\/]+?))\/snapshots\/?$", "i")
+
+  urlParts = url.parse urlString
+  parts = urlParts.pathname.match snapshotregexes[base]
+  return parts[1] if parts
+
 # prepare data for createClient. If createClient success, then we pass client
 # together with req and res into the callback. Otherwise, stop the flow right
 # here and send error back
@@ -120,6 +141,15 @@ getDocument = (req, res, client) ->
         sendError res, error, true
       else
         sendError res, error
+
+# GET returns the documents historical snapshots. The type is sent as headers.
+getDocumentSnapshots = (req, res, client) ->
+  client.getSnapshots req.params.name, (error, snapshots) ->
+    if snapshots && snapshots[0]?
+      res.setHeader 'X-OT-Type', snapshots[0].type.name
+      sendJSON res, snapshots
+    else
+      sendError res, error
 
 # Put is used to create a document. The contents are a JSON object with {type:TYPENAME, meta:{...}}
 putDocument = (req, res, client) ->
@@ -178,6 +208,12 @@ makeDispatchHandler = (createClient, options) ->
         when 'PUT' then auth req, res, createClient, putDocument
         when 'POST' then auth req, res, createClient, postDocument
         when 'DELETE' then auth req, res, createClient, deleteDocument
+        else next()
+    else if name = matchDocNameWithSnapshots(req.url, options.base)
+      req.params or= {}
+      req.params.name = name
+      switch req.method
+        when 'GET' then auth req, res, createClient, getDocumentSnapshots
         else next()
     else
       next()
