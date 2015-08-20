@@ -486,6 +486,13 @@ module.exports = Model = (db, options) ->
     load docName, (error, doc) ->
       callback error, if doc then {v:doc.v, type:doc.type, snapshot:doc.snapshot, meta:doc.meta}
 
+  @getSnapshots = (docname, callback) ->
+    db.getSnapshots docname, (error, snapshots) ->
+      if error
+        callback error, null
+        return
+      callback null, snapshots
+
   # Gets the latest version # of the document.
   # getVersion(docName, callback)
   # callback is called with (error, version).
