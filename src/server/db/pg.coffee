@@ -137,8 +137,8 @@ module.exports = PgDb = (options) ->
         row = result.rows[0]
         data =
           v:        row.v
-          snapshot: JSON.parse(row.snapshot)
-          meta:     JSON.parse(row.meta)
+          snapshot: row.snapshot_json
+          meta:     row.meta_json
           type:     row.type
         callback? null, data
       else if !error?
@@ -197,9 +197,9 @@ module.exports = PgDb = (options) ->
       if !error?
         data = result.rows.map (row) ->
           return {
-            op:   JSON.parse row.op
+            op:   row.op_json
             # v:    row.version
-            meta: JSON.parse row.meta
+            meta: row.meta_json
           }
         callback? null, data
       else
