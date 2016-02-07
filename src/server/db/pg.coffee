@@ -61,8 +61,8 @@ module.exports = PgDb = (options) ->
         doc text NOT NULL,
         v int4 NOT NULL,
         type text NOT NULL,
-        snapshot text NOT NULL,
-        meta text NOT NULL,
+        snapshot jsonb NOT NULL,
+        meta jsonb NOT NULL,
         created_at timestamp(6) NOT NULL,
         CONSTRAINT snapshots_pkey PRIMARY KEY (doc, v)
       );
@@ -70,8 +70,8 @@ module.exports = PgDb = (options) ->
       CREATE TABLE #{operations_table} (
         doc text NOT NULL,
         v int4 NOT NULL,
-        op text NOT NULL,
-        meta text NOT NULL,
+        op jsonb NOT NULL,
+        meta jsonb NOT NULL,
         CONSTRAINT operations_pkey PRIMARY KEY (doc, v)
       );
     """
@@ -86,10 +86,10 @@ module.exports = PgDb = (options) ->
 
   @create = (docName, docData, callback) ->
     sql = """
-      INSERT INTO #{snapshot_table} ("doc", "v", "snapshot_json", "meta_json", "type", "created_at")
-        VALUES ($1, $2, ($3)::json, $4, $5, now() at time zone 'UTC')
+      INSERT INTO #{snapshot_table} ("doc", "v", "snapshot", "meta", "snapshot_json", "meta_json", "type", "created_at")
+        VALUES ($1, $2, ($3)::jsonb, $4, ($5)::json, $6, $7, now() at time zone 'UTC')
     """
-    values = [docName, docData.v, JSON.stringify(docData.snapshot), docData.meta, docData.type]
+    values = [docName, docData.v, JSON.stringify(docData.snapshot), docData.meta, JSON.stringify(docData.snapshot), docData.meta, docData.type]
     client.query sql, values, (error, result) ->
       if !error?
         callback?()
@@ -170,16 +170,16 @@ module.exports = PgDb = (options) ->
   @writeSnapshot = (docName, docData, dbMeta, callback) =>
     sql = if options.keep_snapshots
       """
-        INSERT INTO #{snapshot_table} ("doc", "v", "snapshot_json", "meta_json", "type", "created_at")
-        VALUES ($1, $2, ($3)::json, $4, $5, now() at time zone 'UTC')
+        INSERT INTO #{snapshot_table} ("doc", "v", "snapshot", "meta", "snapshot_json", "meta_json", "type", "created_at")
+        VALUES ($1, $2, ($3)::jsonb, $4, ($5)::json, $6, $7, now() at time zone 'UTC')
       """
     else
       """
         UPDATE #{snapshot_table}
-        SET "v" = $2, snapshot_json = ($3)::json, "meta_json" = $4
+        SET "v" = $2, "snapshot" = ($3)::jsonb, "meta" = $4, snapshot_json = ($5)::json, "meta_json" = $6
         WHERE "doc" = $1
       """
-    values = [docName, docData.v, JSON.stringify(docData.snapshot), docData.meta, docData.type]
+    values = [docName, docData.v, JSON.stringify(docData.snapshot), docData.meta, JSON.stringify(docData.snapshot), docData.meta, docData.type]
     client.query sql, values, (error, result) =>
       if !error?
         if options.keep_operations
@@ -228,10 +228,10 @@ module.exports = PgDb = (options) ->
 
   @writeOp = (docName, opData, callback) ->
     sql = """
-      INSERT INTO #{operations_table} ("doc", "op_json", "v", "meta_json")
-        VALUES ($1, ($2)::json, $3, $4)
+      INSERT INTO #{operations_table} ("doc", "op", "op_json", "v", "meta", "meta_json")
+        VALUES ($1, ($2)::jsonb, ($3)::json, $4, $5, $6)
     """
-    values = [docName, JSON.stringify(opData.op), opData.v, opData.meta]
+    values = [docName, JSON.stringify(opData.op), JSON.stringify(opData.op), opData.v, opData.meta, opData.meta]
     client.query sql, values, (error, result) ->
       if !error?
         callback?()
