@@ -127,7 +127,7 @@ auth = (req, res, createClient, cb) ->
 getDocument = (req, res, client) ->
   client.getSnapshot req.params.name, (error, doc) ->
     if doc
-      res.setHeader 'X-OT-Type', doc.type.name
+      res.setHeader 'X-OT-Type', doc.type
       res.setHeader 'X-OT-Version', doc.v
       if req.method == "HEAD"
         send200 res, ""
@@ -146,7 +146,7 @@ getDocument = (req, res, client) ->
 getDocumentSnapshots = (req, res, client) ->
   client.getSnapshots req.params.name, (error, snapshots) ->
     if snapshots && snapshots[0]?
-      res.setHeader 'X-OT-Type', snapshots[0].type.name
+      res.setHeader 'X-OT-Type', snapshots[0].type
       sendJSON res, snapshots
     else
       sendError res, error
