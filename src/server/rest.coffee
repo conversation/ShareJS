@@ -173,17 +173,13 @@ getDocumentSnapshots = (req, res, client) ->
 # GET returns the document versions.
 getDocumentVersions = (req, res, client) ->
   client.getVersions req.params.name, req.params.every, (error, docs) ->
-    if docs && docs.length > 0
+    return sendError res, error if error
+
+    if docs.length > 0
       res.setHeader 'X-OT-Type', docs[0].type.name
-      if req.method == "HEAD"
-        send200 res, ""
-      else
-        sendJSON res, docs
+      sendJSON res, docs
     else
-      if req.method == "HEAD"
-        sendError res, error, true
-      else
-        sendError res, error
+      sendJSON res, []
 
 # Put is used to create a document. The contents are a JSON object with {type:TYPENAME, meta:{...}}
 putDocument = (req, res, client) ->

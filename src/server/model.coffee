@@ -512,13 +512,17 @@ module.exports = Model = (db, options) ->
         docTemplate = {v: 0, type: type, snapshot: "", meta: null}
         results = []
 
-        for op in ops
-          docTemplate.v = op.v + 1
-          docTemplate.snapshot = type.apply(docTemplate.snapshot, op.op)
-          docTemplate.meta = op.meta
-          results.push(Object.assign({}, docTemplate)) if (docTemplate.v % n is 0)
+        try
+          for op in ops
+            docTemplate.v = op.v + 1
+            docTemplate.snapshot = type.apply(docTemplate.snapshot, op.op)
+            docTemplate.meta = op.meta
+            results.push(Object.assign({}, docTemplate)) if (docTemplate.v % n is 0)
 
-        callback? null, results
+          callback? null, results
+        catch e
+          console.error "Op data invalid for #{docName}: #{e.stack}"
+          callback? 'Op data invalid'
 
   # Gets the latest version # of the document.
   # getVersion(docName, callback)
