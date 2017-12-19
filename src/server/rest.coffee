@@ -5,7 +5,6 @@
 http = require 'http'
 url  = require 'url'
 nameregexes = {}
-snapshotregexes = {}
 
 send403 = (res, message = 'Forbidden\n') ->
   res.writeHead 403, {'Content-Type': 'text/plain'}
@@ -94,13 +93,10 @@ matchDocName = (urlString, base) ->
 #   > matchDocName '/hello_world'
 #   undefined
 matchDocNameWithSnapshots = (urlString, base) ->
-  if !snapshotregexes[base]?
-    base ?= ""
-    base = base[...-1] if base[base.length - 1] == "/"
-    snapshotregexes[base] = new RegExp("^#{base}\/doc\/(?:([^\/]+?))\/snapshots\/?$", "i")
-
+  base ?= ""
+  base = base[...-1] if base[base.length - 1] == "/"
   urlParts = url.parse urlString
-  parts = urlParts.pathname.match snapshotregexes[base]
+  parts = urlParts.pathname.match(new RegExp("^#{base}\/doc\/(?:([^\/]+?))\/snapshots\/?$", "i"))
   return parts[1] if parts
 
 # prepare data for createClient. If createClient success, then we pass client
@@ -142,14 +138,20 @@ getDocument = (req, res, client) ->
       else
         sendError res, error
 
-# GET returns the documents historical snapshots. The type is sent as headers.
+# GET returns the document snapshots.
 getDocumentSnapshots = (req, res, client) ->
-  client.getSnapshots req.params.name, (error, snapshots) ->
-    if snapshots && snapshots[0]?
-      res.setHeader 'X-OT-Type', snapshots[0].type
-      sendJSON res, snapshots
+  client.getSnapshots req.params.name, (error, docs) ->
+    if docs && docs.length > 0
+      res.setHeader 'X-OT-Type', docs[0].type
+      if req.method == "HEAD"
+        send200 res, ""
+      else
+        sendJSON res, docs
     else
-      sendError res, error
+      if req.method == "HEAD"
+        sendError res, error, true
+      else
+        sendError res, error
 
 # Put is used to create a document. The contents are a JSON object with {type:TYPENAME, meta:{...}}
 putDocument = (req, res, client) ->
