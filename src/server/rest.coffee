@@ -99,6 +99,23 @@ matchDocNameWithSnapshots = (urlString, base) ->
   parts = urlParts.pathname.match(new RegExp("^#{base}\/doc\/(?:([^\/]+?))\/snapshots\/?$", "i"))
   return parts[1] if parts
 
+# match a doc path by its url, but only if it's followed by "/versions"
+# For example:
+#   > matchDocName '/doc/testdocument'
+#   undefined
+#   > matchDocName '/doc/testdocument/versions'
+#   'testdocument'
+#   > matchDocName '/document/test'
+#   undefined
+#   > matchDocName '/hello_world'
+#   undefined
+matchDocNameWithVersions = (urlString, base) ->
+  base ?= ""
+  base = base[...-1] if base[base.length - 1] == "/"
+  urlParts = url.parse(urlString, true)
+  parts = urlParts.pathname.match(new RegExp("^#{base}\/doc\/(?:([^\/]+?))\/versions\/?$", "i"))
+  return {name: parts[1], every: parseInt(urlParts.query.every)} if parts
+
 # prepare data for createClient. If createClient success, then we pass client
 # together with req and res into the callback. Otherwise, stop the flow right
 # here and send error back
@@ -123,7 +140,7 @@ auth = (req, res, createClient, cb) ->
 getDocument = (req, res, client) ->
   client.getSnapshot req.params.name, (error, doc) ->
     if doc
-      res.setHeader 'X-OT-Type', doc.type
+      res.setHeader 'X-OT-Type', doc.type.name
       res.setHeader 'X-OT-Version', doc.v
       if req.method == "HEAD"
         send200 res, ""
@@ -143,6 +160,21 @@ getDocumentSnapshots = (req, res, client) ->
   client.getSnapshots req.params.name, (error, docs) ->
     if docs && docs.length > 0
       res.setHeader 'X-OT-Type', docs[0].type
+      if req.method == "HEAD"
+        send200 res, ""
+      else
+        sendJSON res, docs
+    else
+      if req.method == "HEAD"
+        sendError res, error, true
+      else
+        sendError res, error
+
+# GET returns the document versions.
+getDocumentVersions = (req, res, client) ->
+  client.getVersions req.params.name, req.params.every, (error, docs) ->
+    if docs && docs.length > 0
+      res.setHeader 'X-OT-Type', docs[0].type.name
       if req.method == "HEAD"
         send200 res, ""
       else
@@ -216,6 +248,13 @@ makeDispatchHandler = (createClient, options) ->
       req.params.name = name
       switch req.method
         when 'GET' then auth req, res, createClient, getDocumentSnapshots
+        else next()
+    else if {name, every} = matchDocNameWithVersions(req.url, options.base)
+      req.params or= {}
+      req.params.name = name
+      req.params.every = every
+      switch req.method
+        when 'GET' then auth req, res, createClient, getDocumentVersions
         else next()
     else
       next()

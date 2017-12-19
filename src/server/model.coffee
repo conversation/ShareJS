@@ -494,6 +494,32 @@ module.exports = Model = (db, options) ->
       else
         callback? null, snapshots
 
+  # Gets every version of the specified document, in intervals of `n`. This
+  # function doesn't use snapshot data, it rebuilds the document versions from
+  # the operations.
+  #
+  # Callback is called with (error, [{v: <version>, type: <type>, snapshot: <snapshot>, meta: <meta>}])
+  @getVersions = (docName, n, callback) ->
+    load docName, (error, doc) ->
+      return callback? error if error
+
+      # The the doc type of the latest snapshot.
+      type = doc.type
+
+      getOps docName, 0, null, (error, ops) ->
+        return callback? error if error
+
+        docTemplate = {v: 0, type: type, snapshot: "", meta: null}
+        results = []
+
+        for op in ops
+          docTemplate.v = op.v + 1
+          docTemplate.snapshot = type.apply(docTemplate.snapshot, op.op)
+          docTemplate.meta = op.meta
+          results.push(Object.assign({}, docTemplate)) if (docTemplate.v % n is 0)
+
+        callback? null, results
+
   # Gets the latest version # of the document.
   # getVersion(docName, callback)
   # callback is called with (error, version).

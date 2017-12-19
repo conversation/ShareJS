@@ -21,7 +21,7 @@ module.exports = (model, options) ->
       @headers = data.headers
       @remoteAddress = data.remoteAddress
       @authentication = data.authentication
-      
+
       # This is a map from docName -> listener function
       @listeners = {}
 
@@ -46,7 +46,7 @@ module.exports = (model, options) ->
       action.type = switch name
         when 'connect' then 'connect'
         when 'create' then 'create'
-        when 'get snapshot', 'get ops', 'open' then 'read'
+        when 'get snapshot', 'get version', 'get ops', 'open' then 'read'
         when 'submit op' then 'update'
         when 'submit meta' then 'update'
         when 'delete' then 'delete'
@@ -78,7 +78,11 @@ module.exports = (model, options) ->
     getSnapshots: (docName, callback) ->
       @doAuth {docName}, 'get snapshot', callback, ->
         model.getSnapshots docName, callback
-    
+
+    getVersions: (docName, v, callback) ->
+      @doAuth {docName}, 'get version', callback, ->
+        model.getVersions docName, v, callback
+
     create: (docName, type, meta, callback) ->
       # We don't check that types[type.name] == type. That might be important at some point.
       type = types[type] if typeof type == 'string'
@@ -112,7 +116,7 @@ module.exports = (model, options) ->
     delete: (docName, callback) ->
       @doAuth {docName}, 'delete', callback, =>
         model.delete docName, callback
-    
+
     # Open the named document for reading. Just like model.listen, version is optional.
     listen: (docName, version, listener, callback) ->
       authOps = if version?
