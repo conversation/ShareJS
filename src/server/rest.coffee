@@ -245,7 +245,8 @@ makeDispatchHandler = (createClient, options) ->
       switch req.method
         when 'GET' then auth req, res, createClient, getDocumentSnapshots
         else next()
-    else if {name, every} = matchDocNameWithVersions(req.url, options.base)
+    else if result = matchDocNameWithVersions(req.url, options.base)
+      {name, every} = result
       req.params or= {}
       req.params.name = name
       req.params.every = every
