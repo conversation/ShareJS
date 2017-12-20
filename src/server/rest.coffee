@@ -32,7 +32,7 @@ sendError = (res, message, head = false) ->
       res.end "Error: #{message}\n"
     else
       res.writeHead 500, {}
-      res.end ""
+      res.end "Error: #{message}\n"
 
 send400 = (res, message) ->
   res.writeHead 400, {'Content-Type': 'text/plain'}
