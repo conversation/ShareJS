@@ -5,7 +5,6 @@
 http = require 'http'
 url  = require 'url'
 nameregexes = {}
-snapshotregexes = {}
 
 send403 = (res, message = 'Forbidden\n') ->
   res.writeHead 403, {'Content-Type': 'text/plain'}
@@ -33,7 +32,7 @@ sendError = (res, message, head = false) ->
       res.end "Error: #{message}\n"
     else
       res.writeHead 500, {}
-      res.end ""
+      res.end "Error: #{message}\n"
 
 send400 = (res, message) ->
   res.writeHead 400, {'Content-Type': 'text/plain'}
@@ -94,14 +93,28 @@ matchDocName = (urlString, base) ->
 #   > matchDocName '/hello_world'
 #   undefined
 matchDocNameWithSnapshots = (urlString, base) ->
-  if !snapshotregexes[base]?
-    base ?= ""
-    base = base[...-1] if base[base.length - 1] == "/"
-    snapshotregexes[base] = new RegExp("^#{base}\/doc\/(?:([^\/]+?))\/snapshots\/?$", "i")
-
+  base ?= ""
+  base = base[...-1] if base[base.length - 1] == "/"
   urlParts = url.parse urlString
-  parts = urlParts.pathname.match snapshotregexes[base]
+  parts = urlParts.pathname.match(new RegExp("^#{base}\/doc\/(?:([^\/]+?))\/snapshots\/?$", "i"))
   return parts[1] if parts
+
+# match a doc path by its url, but only if it's followed by "/versions"
+# For example:
+#   > matchDocName '/doc/testdocument'
+#   undefined
+#   > matchDocName '/doc/testdocument/versions'
+#   'testdocument'
+#   > matchDocName '/document/test'
+#   undefined
+#   > matchDocName '/hello_world'
+#   undefined
+matchDocNameWithVersions = (urlString, base) ->
+  base ?= ""
+  base = base[...-1] if base[base.length - 1] == "/"
+  urlParts = url.parse(urlString, true)
+  parts = urlParts.pathname.match(new RegExp("^#{base}\/doc\/(?:([^\/]+?))\/versions\/?$", "i"))
+  return {name: parts[1], every: parseInt(urlParts.query.every)} if parts
 
 # prepare data for createClient. If createClient success, then we pass client
 # together with req and res into the callback. Otherwise, stop the flow right
@@ -127,7 +140,7 @@ auth = (req, res, createClient, cb) ->
 getDocument = (req, res, client) ->
   client.getSnapshot req.params.name, (error, doc) ->
     if doc
-      res.setHeader 'X-OT-Type', doc.type
+      res.setHeader 'X-OT-Type', doc.type.name
       res.setHeader 'X-OT-Version', doc.v
       if req.method == "HEAD"
         send200 res, ""
@@ -142,14 +155,31 @@ getDocument = (req, res, client) ->
       else
         sendError res, error
 
-# GET returns the documents historical snapshots. The type is sent as headers.
+# GET returns the document snapshots.
 getDocumentSnapshots = (req, res, client) ->
-  client.getSnapshots req.params.name, (error, snapshots) ->
-    if snapshots && snapshots[0]?
-      res.setHeader 'X-OT-Type', snapshots[0].type
-      sendJSON res, snapshots
+  client.getSnapshots req.params.name, (error, docs) ->
+    if docs && docs.length > 0
+      res.setHeader 'X-OT-Type', docs[0].type
+      if req.method == "HEAD"
+        send200 res, ""
+      else
+        sendJSON res, docs
     else
-      sendError res, error
+      if req.method == "HEAD"
+        sendError res, error, true
+      else
+        sendError res, error
+
+# GET returns the document versions.
+getDocumentVersions = (req, res, client) ->
+  client.getVersions req.params.name, req.params.every, (error, docs) ->
+    return sendError res, error if error
+
+    if docs.length > 0
+      res.setHeader 'X-OT-Type', docs[0].type.name
+      sendJSON res, docs
+    else
+      sendJSON res, []
 
 # Put is used to create a document. The contents are a JSON object with {type:TYPENAME, meta:{...}}
 putDocument = (req, res, client) ->
@@ -214,6 +244,13 @@ makeDispatchHandler = (createClient, options) ->
       req.params.name = name
       switch req.method
         when 'GET' then auth req, res, createClient, getDocumentSnapshots
+        else next()
+    else if {name, every} = matchDocNameWithVersions(req.url, options.base)
+      req.params or= {}
+      req.params.name = name
+      req.params.every = every
+      switch req.method
+        when 'GET' then auth req, res, createClient, getDocumentVersions
         else next()
     else
       next()
