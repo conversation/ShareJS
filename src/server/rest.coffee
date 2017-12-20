@@ -176,7 +176,7 @@ getDocumentVersions = (req, res, client) ->
     return sendError res, error if error
 
     if docs.length > 0
-      res.setHeader 'X-OT-Type', docs[0].type.name
+      res.setHeader 'X-OT-Type', docs[0].type
       sendJSON res, docs
     else
       sendJSON res, []
