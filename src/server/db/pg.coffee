@@ -176,7 +176,7 @@ module.exports = PgDb = (options) ->
     else
       """
         UPDATE #{snapshot_table}
-        SET "v" = $2, "snapshot" = ($3)::jsonb, "meta" = $4
+        SET "v" = $2, "snapshot" = ($3)::jsonb, "meta" = $4, "type" = $5
         WHERE "doc" = $1
       """
     values = [docName, docData.v, JSON.stringify(docData.snapshot), docData.meta, docData.type]
