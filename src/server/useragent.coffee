@@ -75,10 +75,6 @@ module.exports = (model, options) ->
       @doAuth {docName}, 'get snapshot', callback, ->
         model.getSnapshot docName, callback
 
-    getSnapshots: (docName, callback) ->
-      @doAuth {docName}, 'get snapshot', callback, ->
-        model.getSnapshots docName, callback
-
     getVersions: (docName, v, callback) ->
       @doAuth {docName}, 'get version', callback, ->
         model.getVersions docName, v, callback
