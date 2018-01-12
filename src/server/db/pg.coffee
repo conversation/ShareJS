@@ -32,7 +32,6 @@ defaultOptions =
   create_tables_automatically: true
   operations_table: 'ops'
   snapshot_table: 'snapshots'
-  keep_snapshots: false
   keep_operations: false
 
 module.exports = PgDb = (options) ->
@@ -146,18 +145,12 @@ module.exports = PgDb = (options) ->
         callback? error?.message
 
   @writeSnapshot = (docName, docData, dbMeta, callback) =>
-    sql = if options.keep_snapshots
-      """
-        INSERT INTO #{snapshot_table} ("doc", "v", "snapshot", "meta", "type", "created_at")
-        VALUES ($1, $2, ($3)::jsonb, $4, $5, now() at time zone 'UTC')
-      """
-    else
-      """
-        UPDATE #{snapshot_table}
-        SET "v" = $2, "snapshot" = ($3)::jsonb, "meta" = $4, "type" = $5
-        WHERE "doc" = $1
-      """
-    values = [docName, docData.v, JSON.stringify(docData.snapshot), docData.meta, docData.type]
+    sql = """
+      UPDATE #{snapshot_table}
+      SET "v" = $2, "snapshot" = ($3)::jsonb, "meta" = $4
+      WHERE "doc" = $1
+    """
+    values = [docName, docData.v, JSON.stringify(docData.snapshot), docData.meta]
     client.query sql, values, (error, result) =>
       if !error?
         if options.keep_operations
