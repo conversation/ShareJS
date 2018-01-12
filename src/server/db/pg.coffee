@@ -32,7 +32,6 @@ defaultOptions =
   create_tables_automatically: true
   operations_table: 'ops'
   snapshot_table: 'snapshots'
-  keep_operations: false
 
 module.exports = PgDb = (options) ->
   return new Db if !(this instanceof PgDb)
@@ -144,31 +143,13 @@ module.exports = PgDb = (options) ->
       else
         callback? error?.message
 
-  @writeSnapshot = (docName, docData, dbMeta, callback) =>
+  @writeSnapshot = (docName, docData, dbMeta, callback) ->
     sql = """
       UPDATE #{snapshot_table}
       SET "v" = $2, "snapshot" = ($3)::jsonb, "meta" = $4
       WHERE "doc" = $1
     """
     values = [docName, docData.v, JSON.stringify(docData.snapshot), docData.meta]
-    client.query sql, values, (error, result) =>
-      if !error?
-        if options.keep_operations
-          callback?()
-        else
-          @deleteOps docName, docData, dbMeta, callback
-      else
-        callback? error?.message
-
-  @deleteOps = (docName, docData, dbMeta, callback) ->
-    sql = """
-      DELETE FROM #{operations_table}
-      WHERE "doc" = $1
-      AND v < $2
-      AND cast(meta_json ->> 'ts' as numeric) < floor(extract(epoch from (now() - interval '1 hour')) * 1000)::numeric
-      RETURNING *
-    """
-    values = [docName, docData.v]
     client.query sql, values, (error, result) ->
       if !error?
         callback?()
