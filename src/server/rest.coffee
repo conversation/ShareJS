@@ -82,23 +82,6 @@ matchDocName = (urlString, base) ->
   parts = urlParts.pathname.match nameregexes[base]
   return parts[1] if parts
 
-# match a doc path by its url, but only if it's followed by "/snapshots"
-# For example:
-#   > matchDocName '/doc/testdocument'
-#   undefined
-#   > matchDocName '/doc/testdocument/snapshots'
-#   'testdocument'
-#   > matchDocName '/document/test'
-#   undefined
-#   > matchDocName '/hello_world'
-#   undefined
-matchDocNameWithSnapshots = (urlString, base) ->
-  base ?= ""
-  base = base[...-1] if base[base.length - 1] == "/"
-  urlParts = url.parse urlString
-  parts = urlParts.pathname.match(new RegExp("^#{base}\/doc\/(?:([^\/]+?))\/snapshots\/?$", "i"))
-  return parts[1] if parts
-
 # match a doc path by its url, but only if it's followed by "/versions"
 # For example:
 #   > matchDocName '/doc/testdocument'
@@ -149,21 +132,6 @@ getDocument = (req, res, client) ->
           send200 res, doc.snapshot
         else
           sendJSON res, doc.snapshot
-    else
-      if req.method == "HEAD"
-        sendError res, error, true
-      else
-        sendError res, error
-
-# GET returns the document snapshots.
-getDocumentSnapshots = (req, res, client) ->
-  client.getSnapshots req.params.name, (error, docs) ->
-    if docs && docs.length > 0
-      res.setHeader 'X-OT-Type', docs[0].type
-      if req.method == "HEAD"
-        send200 res, ""
-      else
-        sendJSON res, docs
     else
       if req.method == "HEAD"
         sendError res, error, true
@@ -238,12 +206,6 @@ makeDispatchHandler = (createClient, options) ->
         when 'PUT' then auth req, res, createClient, putDocument
         when 'POST' then auth req, res, createClient, postDocument
         when 'DELETE' then auth req, res, createClient, deleteDocument
-        else next()
-    else if name = matchDocNameWithSnapshots(req.url, options.base)
-      req.params or= {}
-      req.params.name = name
-      switch req.method
-        when 'GET' then auth req, res, createClient, getDocumentSnapshots
         else next()
     else if result = matchDocNameWithVersions(req.url, options.base)
       {name, every} = result

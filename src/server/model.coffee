@@ -486,14 +486,6 @@ module.exports = Model = (db, options) ->
     load docName, (error, doc) ->
       callback error, if doc then {v:doc.v, type:doc.type, snapshot:doc.snapshot, meta:doc.meta}
 
-  # Gets the snapshots for the specified document.
-  @getSnapshots = (docname, callback) ->
-    db.getSnapshots docname, (error, snapshots) ->
-      if error
-        callback? error
-      else
-        callback? null, snapshots
-
   # Gets every version of the specified document, in intervals of `n`. This
   # function doesn't use snapshot data, it rebuilds the document versions from
   # the operations.
