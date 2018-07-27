@@ -14,13 +14,16 @@
 if WEB?
   types = exports.types
   {BCSocket, SockJS, WebSocket} = window
-  if BCSocket
-    socketImpl = 'channel'
-  else
-    if SockJS
-      socketImpl = 'sockjs'
-    else
-      socketImpl = 'websocket'
+
+  socketImpl = 'websocket'
+
+  # if BCSocket
+  #   socketImpl = 'channel'
+  # else
+  #   if SockJS
+  #     socketImpl = 'sockjs'
+  #   else
+  #     socketImpl = 'websocket'
 else
   types = require '../types'
   {BCSocket} = require 'browserchannel'
@@ -132,7 +135,7 @@ class Connection
     @socket.close()
 
   # *** Doc management
- 
+
   makeDoc: (name, data, callback) ->
     throw new Error("Doc #{name} already open") if @docs[name]
     doc = new Doc(@, name, data)

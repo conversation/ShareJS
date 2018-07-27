@@ -961,15 +961,7 @@
   if (typeof WEB !== "undefined" && WEB !== null) {
     types = exports.types;
     BCSocket = window.BCSocket, SockJS = window.SockJS, WebSocket = window.WebSocket;
-    if (BCSocket) {
-      socketImpl = 'channel';
-    } else {
-      if (SockJS) {
-        socketImpl = 'sockjs';
-      } else {
-        socketImpl = 'websocket';
-      }
-    }
+    socketImpl = 'websocket';
   } else {
     types = require('../types');
     BCSocket = require('browserchannel').BCSocket;
