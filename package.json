@@ -27,7 +27,7 @@
     "express": "~ 3.x",
     "optimist": ">= 0.2.4",
     "nodeunit": "*",
-    "shelljs": "*",
+    "shelljs": "0.1.4",
     "uglify-js": "~1",
     "websocket": "*"
   },
