@@ -48,7 +48,7 @@ Then:
     # npm install redis   # If you want redis support
     # npm link
 
-Run the tests: (you will need an old version of nodeunit for this: `npm install -g nodeunit@0.6.4`)
+Run the tests: (you will need an old version of nodeunit for this: `npm install -g nodeunit@0.9.0`)
 
     # cake test
 
