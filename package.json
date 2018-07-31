@@ -39,7 +39,7 @@
   },
   "scripts": {
     "build": "cake build",
-    "test": "cake test",
+    "test": "cake --verbose test",
     "prepublish": "cake webclient"
   },
   "licenses": [
