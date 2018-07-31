@@ -138,7 +138,7 @@ genTests = (async) -> testCase
       @model.getSnapshot @name, (error, data) =>
         test.deepEqual data, {snapshot:{str:''}, type:types.simple, meta:{}, v:0}
         test.done()
-  
+
   "if there is an error in db.create, the document isn't cached": (test) ->
     @db.create = (docName, data, callback) =>
       callback 'invalid tubes!'
@@ -209,7 +209,7 @@ genTests = (async) -> testCase
   "If getSnapshot() returns a type name that doesn't exist, we return an error": (test) ->
     @db.getSnapshot = (docName, callback) ->
       callback null, {snapshot:{str:'hi'}, type:'does not exist', meta:{}, v:0}
-    
+
     @model.getSnapshot @name, (error, data) ->
       test.strictEqual error, 'Type not found'
       test.done()
@@ -324,7 +324,7 @@ genTests = (async) -> testCase
     @model.delete @name, (error) ->
       test.strictEqual error, "invalid tubes!"
       test.done()
-  
+
   'Deleting a nonexistant document with no database raises an error': (test) ->
     @setDb null
 
@@ -369,10 +369,14 @@ genTests = (async) -> testCase
     @model.create @name, 'simple', (error) =>
       @model.delete @name, (error) =>
         test.done()
-  
+
   # *** Tests for applyOp
 
   'applyOp updates the document snapshot': (test) ->
+    # mock date...
+    origDateNow = Date.now
+    Date.now = () -> 12345
+
     @db.writeOp = (docName, opData, callback) -> callback()
 
     @db.getSnapshot = (docName, callback) -> callback null, {snapshot:{str:'hello'}, type:'simple', meta:{}, v:100}
@@ -382,7 +386,10 @@ genTests = (async) -> testCase
       test.equal error, null
       test.strictEqual v, 100
       @model.getSnapshot @name, (error, data) ->
-        test.deepEqual data, {snapshot:{str:'hello world'}, type:types.simple, meta:{}, v:101}
+        test.deepEqual data, {snapshot:{str:'hello world'}, type:types.simple, meta:{ mtime: 12345 }, v:101}
+
+        # reset the mock
+        Date.now = origDateNow
         test.done()
 
   'applyOp ignores irrelevant dupIfSource:[...] arguments in op data': (test) ->
@@ -395,7 +402,7 @@ genTests = (async) -> testCase
       test.equal error, null
       test.strictEqual v, 100
       test.done()
-  
+
   'applyOp rejects ops with a missing version': (test) ->
     @db.getSnapshot = (docName, callback) -> callback null, {snapshot:{str:'hello'}, type:'simple', meta:{}, v:100}
     @db.getOps = (docName, start, end, callback) -> callback null, []
@@ -464,7 +471,7 @@ genTests = (async) -> testCase
       test.strictEqual error, 'Document does not exist'
       test.equal v, null
       test.done()
-  
+
   "applyOp propogates errors and aborts if the op is invalid": (test) ->
     @db.create = (docName, data, callback) -> callback()
     # db.writeOp shouldn't be called.
@@ -492,14 +499,21 @@ genTests = (async) -> testCase
           test.done()
 
   "writeSnapshot is called after the specified number of ops are appended": (test) ->
+    # mock date...
+    origDateNow = Date.now
+    Date.now = () -> 12345
+
     # In this case, 2!
     @db.create = (docName, data, callback) -> callback()
     @db.writeOp = (docName, opData, callback) -> callback()
     @db.writeSnapshot = (docName, data, dbMeta, callback) =>
       test.strictEqual docName, @name
-      test.deepEqual data, {snapshot:{str:'ab'}, type:'simple', meta:{}, v:2}
+      test.deepEqual data, {snapshot:{str:'ab'}, type:'simple', meta:{ mtime: 12345 }, v:2}
       test.equal dbMeta, null
       callback()
+
+      # reset the mock
+      Date.now = origDateNow
       test.done()
 
     @model.create @name, 'simple', (error) =>
@@ -539,7 +553,7 @@ genTests = (async) -> testCase
 
     # writeSnapshot should not be called by this test, because obviously the document has been
     # saved at version 100.
- 
+
     @db.getSnapshot = (docName, callback) ->
       callback null, {snapshot:{str:'hi'}, type:'simple', meta:{}, v:100}
     @db.getOps = (docName, start, end, callback) -> callback null, []
@@ -637,7 +651,7 @@ genTests = (async) -> testCase
       test.strictEqual error, 'blargh death'
       test.equal ops, null
       test.done()
-  
+
   "getOps() with no db and no cached data returns an error": (test) ->
     @setDb null
 
@@ -691,7 +705,7 @@ genTests = (async) -> testCase
 
   'flush with no documents open does nothing': (test) ->
     @model.flush -> test.done()
-  
+
   "flush doesn't need a callback": (test) ->
     @model.flush()
     test.done()
@@ -713,6 +727,10 @@ genTests = (async) -> testCase
         test.done()
 
   "flush calls writeSnapshot on open, edited documents": (test) ->
+    # mock date...
+    origDateNow = Date.now
+    Date.now = () -> 12345
+
     @db.create = (docName, data, callback) -> callback null, {db:'meta'}
     @db.writeOp = (docName, opData, callback) -> callback()
     @db.getOps = (docName, start, end, callback) -> callback null, []
@@ -720,7 +738,7 @@ genTests = (async) -> testCase
     snapshotWritten = false
     @db.writeSnapshot = (docName, data, dbMeta, callback) =>
       test.strictEqual docName, @name
-      test.deepEqual data, {snapshot:{str:'hi'}, type:'simple', meta:{}, v:1}
+      test.deepEqual data, {snapshot:{str:'hi'}, type:'simple', meta:{ mtime: 12345 }, v:1}
       test.deepEqual dbMeta, {db:'meta'}
       snapshotWritten = true
       callback()
@@ -729,6 +747,9 @@ genTests = (async) -> testCase
       @model.applyOp @name, {v:0, op:{position:0, text:'hi'}, meta:{}}, (error) =>
         @model.flush ->
           test.strictEqual snapshotWritten, true
+
+          # reset the mock
+          Date.now = origDateNow
           test.done()
 
   "flushing a document which has already been flushed does nothing": (test) ->
@@ -738,7 +759,7 @@ genTests = (async) -> testCase
       # First time ok, second time not ok.
       @db.writeSnapshot = (docName, data, dbMeta, callback) ->
         throw new Error "Snapshot already saved"
-      
+
       callback()
 
     @model.create @name, 'simple', (error) =>
@@ -780,6 +801,10 @@ genTests = (async) -> testCase
         , 15
 
   'A snapshot is flushed to the database when the document is reaped': (test) ->
+    # mock date...
+    origDateNow = Date.now
+    Date.now = () -> 12345
+
     @db.getSnapshot = (docName, callback) ->
       called = true
       callback null, {snapshot:{str:'hi'}, type:'simple', meta:{}, v:100}, {db:'meta'}
@@ -787,11 +812,14 @@ genTests = (async) -> testCase
     @db.writeOp = (docName, opData, callback) -> callback()
     @db.writeSnapshot = (docName, data, dbMeta, callback) =>
       test.strictEqual docName, @name
-      test.deepEqual data, {snapshot:{str:'xhi'}, type:'simple', meta:{}, v:101}
+      test.deepEqual data, {snapshot:{str:'xhi'}, type:'simple', meta:{ mtime: 12345 }, v:101}
       test.deepEqual dbMeta, {db:'meta'}
       callback()
 
     @model.applyOp @name, {v:100, op:{position:0, text:'x'}, meta:{}}, (error) =>
+      # reset the mock
+      Date.now = origDateNow
+
       setTimeout =>
           # At this point, writeSnapshot should have been called.
           test.expect 3
@@ -948,7 +976,7 @@ exports['integration'] = testCase
       test.equal error, null
       test.deepEqual data, {v:0, type:types.simple, snapshot:{str:''}, meta:{}}
       test.done()
-  
+
   'Calling create works with a type literal instead of a string': (test) ->
     @model.create @unused, types.simple, (error) =>
       test.equal error, null
@@ -956,14 +984,14 @@ exports['integration'] = testCase
         test.equal error, null
         test.deepEqual data, {v:0, type:types.simple, snapshot:{str:''}, meta:{}}
         test.done()
-  
+
   'Creating a document a second time has no effect': (test) ->
     @model.create @name, types.text, (error) =>
       test.strictEqual error, 'Document already exists'
       @model.getSnapshot @name, (error, data) =>
         test.deepEqual data, {v:0, type:types.simple, snapshot:{str:''}, meta:{}}
         test.done()
-  
+
   'Subsequent calls to getSnapshot work': (test) ->
     # Written in response to a real bug. (!!)
     @model.create @name, types.text, (error) =>
@@ -973,18 +1001,26 @@ exports['integration'] = testCase
           test.equal error, null
           test.deepEqual data, {v:0, type:types.simple, snapshot:{str:''}, meta:{}}
           test.done()
-  
+
   "Can't create a document with a slash in the name": (test) ->
     @model.create 'foo/bar', types.text, (error) ->
       test.strictEqual error, 'Invalid document name'
       test.done()
 
   'Return a fresh snapshot after submitting ops': (test) ->
+    # mock date...
+    origDateNow = Date.now
+    Date.now = () -> 12345
+
     @model.applyOp @name, {v:0, op:{position: 0, text:'hi'}}, (error, appliedVersion) =>
       test.equal error, null
       test.strictEqual appliedVersion, 0
+
+      # reset the mock
+      Date.now = origDateNow
+
       @model.getSnapshot @name, (error, data) ->
-        test.deepEqual data, {v:1, type:types.simple, snapshot:{str:'hi'}, meta:{}}
+        test.deepEqual data, {v:1, type:types.simple, snapshot:{str:'hi'}, meta:{ mtime: 12345 }}
         test.done()
 
   'Apply op to future version fails': (test) ->
@@ -992,17 +1028,24 @@ exports['integration'] = testCase
       @model.applyOp @name, {v:1, op:{position: 0, text: 'hi'}}, (error, result) ->
         test.strictEqual error, 'Op at future version'
         test.done()
-  
+
   'Apply ops at the most recent version': (test) ->
+    # mock date...
+    origDateNow = Date.now
+    Date.now = () -> 12345
+
     applyOps @model, @name, 0, [
         {position: 0, text: 'Hi '}
         {position: 3, text: 'mum'}
         {position: 3, text: 'to you '}
       ], (error, data) ->
         test.strictEqual error, null
-        test.deepEqual data, {v:3, type:types.simple, snapshot:{str:'Hi to you mum'}, meta:{}}
+        test.deepEqual data, {v:3, type:types.simple, snapshot:{str:'Hi to you mum'}, meta:{ mtime: 12345 }}
+
+        # reset the mock
+        Date.now = origDateNow
         test.done()
-        
+
   'Apply ops at an old version': (test) ->
     applyOps @model, @name, 0, [
         {position: 0, text: 'Hi '}
@@ -1027,12 +1070,12 @@ exports['integration'] = testCase
         test.strictEqual error, 'Document does not exist'
         test.equal data, null
         test.done()
-  
+
   "Pass false to the callback if you delete something that doesn't exist": (test) ->
     @model.delete @unused, (error) ->
       test.strictEqual error, 'Document does not exist'
       test.done()
-  
+
   'getOps returns ops in the document': (test) ->
     submittedOps = [{position: 0, text: 'Hi'}, {position: 2, text: ' mum'}]
     passPart = makePassPart test, 6
@@ -1076,7 +1119,7 @@ exports['integration'] = testCase
     @model.getOps @name, 0, null, (error, data) ->
       test.deepEqual data, []
       passPart()
- 
+
   'getOps with a null count returns all the ops': (test) ->
     submittedOps = [{position: 0, text: 'Hi'}, {position: 2, text: ' mum'}]
     applyOps @model, @name, 0, submittedOps.slice(), (error, _) =>
@@ -1084,7 +1127,7 @@ exports['integration'] = testCase
         test.equal error, null
         test.deepEqual data.map((d) -> d.op), submittedOps
         test.done()
-  
+
   'ops submitted have a metadata object added': (test) ->
     t1 = Date.now()
     @model.applyOp @name, {op:{position: 0, text: 'hi'}, v:0}, (error, version) =>
@@ -1096,7 +1139,7 @@ exports['integration'] = testCase
         test.strictEqual typeof d.meta, 'object'
         test.ok Date.now() >= d.meta.ts >= t1
         test.done()
-  
+
   'metadata is stored': (test) ->
     @model.applyOp @name, {v:0, op:{position: 0, text: 'hi'}, meta:{blah:'blat'}}, (error, version) =>
       @model.getOps @name, 0, 1, (error, data) ->

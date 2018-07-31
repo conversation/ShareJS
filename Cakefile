@@ -17,24 +17,18 @@ task 'test', 'Run all tests', (options) ->
   console.log 'Running tests... (is your webclient up-to-date and nodeunit installed?)'
 
   config.silent = true unless options['verbose']
-  exec 'nodeunit tests.coffee', (err, stdout, stderr) ->
-    if err == 0
+  exec 'nodeunit tests.coffee', (status, stdout, stderr) ->
+    if status == 0
       console.log 'All tests succeeded!'
     else
-      console.log "Some tests failed (error: #{err}). Try --verbose."
+      console.log "Some tests failed (error: #{status}). Try --verbose."
+    process.exit(1) if status isnt 0
   config.silent = false
 
 # This is only needed to be able to refer to the line numbers of crashes
 task 'build', 'Build the .js files', ->
   console.log 'Compiling Coffee from src to lib'
   exec "coffee --compile --bare --output lib/ src/"
-  invoke 'package'
-
-task 'package', 'Convert package.coffee to package.json', ->
-  pkgInfo = require './package.coffee'
-
-  JSON.stringify(pkgInfo, null, 2).to 'package.json'
-
 
 makeUgly = (infile, outfile) ->
   # Uglify compile the JS
@@ -110,7 +104,7 @@ task 'webclient', 'Build the web client into one file', ->
 
 option '-V', '--version [version]', 'The new patch version'
 task 'bump', 'Increase the patch level of the version, -V is optional', (options) ->
-  oldVersion = require("./package.coffee").version
+  oldVersion = require("./package.json").version
 
   console.log "Current version is #{oldVersion}"
 
@@ -127,10 +121,9 @@ task 'bump', 'Increase the patch level of the version, -V is optional', (options
   if exec("git status --porcelain").output.match /^ M /m
     throw new Error "git status must be clean"
 
-  for file in ["package.coffee", "src/index.coffee", "src/client/web-prelude.coffee"]
+  for file in ["package.json", "src/index.coffee", "src/client/web-prelude.coffee"]
     sed '-i', oldVersion, version, file
 
-  invoke "package"
   invoke "webclient"
   exec "git commit -a -m 'Bump to #{version}'"
 

@@ -1,5 +1,4 @@
-before_script: "npm install && npm install nodeunit coffee-script"
+before_script: "npm install && npm install nodeunit@0.6.4 coffee-script@1.6.2"
 language: node_js
 node_js:
-  - 0.6
-  - 0.8
+  - 0.10
