@@ -17,7 +17,7 @@
     "socket.io": "~0.8",
     "socket.io-client": "~0.8",
     "browserchannel": "~1",
-    "ws": "*",
+    "ws": "0.4.32",
     "connect": "<3.x",
     "request": ">= 2.1.1",
     "coffee-script": "1.6.2",
