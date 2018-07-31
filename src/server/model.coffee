@@ -20,8 +20,12 @@ isArray = (o) -> Object.prototype.toString.call(o) == '[object Array]'
 # - It calls out to the OT functions when necessary
 #
 # The model is an event emitter. It emits the following events:
-#
-# create(docName, data): A document has been created with the specified name & data
+# - create(docName, data): A document has been created with the specified name & data
+# - add(docName, data)
+# - load(docName, data)
+# - applyOp(docName, opData, snapshot, oldSnapshot)
+# - applyMetaOp(docName, path, value)
+
 module.exports = Model = (db, options) ->
   # db can be null if the user doesn't want persistance.
 
@@ -166,6 +170,7 @@ module.exports = Model = (db, options) ->
         # and (maybe!) save a new document snapshot to the database.
 
         doc.v = opData.v + 1
+        doc.meta.mtime = Date.now()
         doc.snapshot = snapshot
 
         doc.ops.push opData
@@ -177,7 +182,7 @@ module.exports = Model = (db, options) ->
         # The callback is called with the version of the document at which the op was applied.
         # This is the op.v after transformation, and its doc.v - 1.
         callback null, opData.v
-    
+
         # I need a decent strategy here for deciding whether or not to save the snapshot.
         #
         # The 'right' strategy looks something like "Store the snapshot whenever the snapshot
@@ -197,6 +202,11 @@ module.exports = Model = (db, options) ->
 
     if error
       callback error for callback in callbacks if callbacks
+    else if docs[docName]
+      # The doc may have been created by another agent since we last checked for its
+      # existence in docs. If it was, don't create it again.
+      doc = docs[docName]
+      callback 'Document already exists' for callback in callbacks if callbacks
     else
       doc = docs[docName] =
         snapshot: data.snapshot
@@ -218,14 +228,15 @@ module.exports = Model = (db, options) ->
         snapshotWriteLock: false
         dbMeta: dbMeta
 
+      doc.eventEmitter.setMaxListeners 0
       doc.opQueue = makeOpQueue docName, doc
-      
+
       refreshReapingTimeout docName
       model.emit 'add', docName, data
       callback null, doc for callback in callbacks if callbacks
 
     doc
-  
+
   # This is a little helper wrapper around db.getOps. It does two things:
   #
   # - If there's no database set, it returns an error to the callback
@@ -400,7 +411,7 @@ module.exports = Model = (db, options) ->
 
   # Perminantly deletes the specified document.
   # If listeners are attached, they are removed.
-  # 
+  #
   # The callback is called with (error) if there was an error. If error is null / undefined, the
   # document was deleted.
   #
@@ -475,6 +486,43 @@ module.exports = Model = (db, options) ->
     load docName, (error, doc) ->
       callback error, if doc then {v:doc.v, type:doc.type, snapshot:doc.snapshot, meta:doc.meta}
 
+  # Gets every version of the specified document, in intervals of `n`. This
+  # function doesn't use snapshot data, it rebuilds the document versions from
+  # the operations.
+  #
+  # Callback is called with (error, [{v: <version>, type: <type>, snapshot: <snapshot>, meta: <meta>}])
+  @getVersions = (docName, n, callback) ->
+    load docName, (error, doc) ->
+      return callback? error if error
+
+      # The the doc type of the latest snapshot.
+      type = doc.type
+
+      getOps docName, 0, null, (error, ops) ->
+        return callback? error if error
+
+        docTemplate = {v: 0, type: type, snapshot: "", meta: null}
+        results = []
+
+        try
+          for op in ops
+            docTemplate.v = op.v + 1
+            docTemplate.snapshot = type.apply(docTemplate.snapshot, op.op)
+            docTemplate.meta = op.meta
+
+            if docTemplate.v % n is 0
+              results.push({
+                v: docTemplate.v,
+                type: docTemplate.type.name,
+                snapshot: docTemplate.snapshot,
+                meta: docTemplate.meta
+              })
+
+          callback? null, results
+        catch e
+          console.error "Op data invalid for #{docName}: #{e.stack}"
+          callback? 'Op data invalid'
+
   # Gets the latest version # of the document.
   # getVersion(docName, callback)
   # callback is called with (error, version).
@@ -484,7 +532,7 @@ module.exports = Model = (db, options) ->
   # Apply an op to the specified document.
   # The callback is passed (error, applied version #)
   # opData = {op:op, v:v, meta:metadata}
-  # 
+  #
   # Ops are queued before being applied so that the following code applies op C before op B:
   # model.applyOp 'doc', OPA, -> model.applyOp 'doc', OPB
   # model.applyOp 'doc', OPC
@@ -501,7 +549,7 @@ module.exports = Model = (db, options) ->
   # TODO: op and meta should be combineable in the op that gets sent
   @applyMetaOp = (docName, metaOpData, callback) ->
     {path, value} = metaOpData.meta
-   
+
     return callback? "path should be an array" unless isArray path
 
     load docName, (error, doc) ->
@@ -522,7 +570,7 @@ module.exports = Model = (db, options) ->
   #
   # The callback is called once the listener is attached, but before any ops have been passed
   # to the listener.
-  # 
+  #
   # This will _not_ edit the document metadata.
   #
   # If there are any listeners, we don't purge the document from the cache. But be aware, this behaviour
@@ -566,8 +614,9 @@ module.exports = Model = (db, options) ->
   # This is synchronous.
   @removeListener = (docName, listener) ->
     # The document should already be loaded.
-    doc = docs[docName]
-    throw new Error 'removeListener called but document not loaded' unless doc
+    # If it's not we probably hit a race condition where the browser closes
+    # before the document opened. In that case, ignore.
+    return unless doc = docs[docName]
 
     doc.eventEmitter.removeListener 'op', listener
     refreshReapingTimeout docName

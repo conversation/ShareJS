@@ -20,6 +20,7 @@ module.exports = (model, options) ->
       @connectTime = new Date
       @headers = data.headers
       @remoteAddress = data.remoteAddress
+      @authentication = data.authentication
 
       # This is a map from docName -> listener function
       @listeners = {}
@@ -45,20 +46,20 @@ module.exports = (model, options) ->
       action.type = switch name
         when 'connect' then 'connect'
         when 'create' then 'create'
-        when 'get snapshot', 'get ops', 'open' then 'read'
+        when 'get snapshot', 'get version', 'get ops', 'open' then 'read'
         when 'submit op' then 'update'
         when 'submit meta' then 'update'
         when 'delete' then 'delete'
         else throw new Error "Invalid action name #{name}"
 
-      responded = false
-      action.reject = ->
-        throw new Error 'Multiple accept/reject calls made' if responded
-        responded = true
-        userCallback 'forbidden', null
+      action.responded = false
+      action.reject = (message='forbidden') ->
+        throw new Error 'Multiple accept/reject calls made' if @responded
+        @responded = true
+        userCallback message, null
       action.accept = ->
-        throw new Error 'Multiple accept/reject calls made' if responded
-        responded = true
+        throw new Error 'Multiple accept/reject calls made' if @responded
+        @responded = true
         acceptCallback()
 
       auth this, action
@@ -73,7 +74,11 @@ module.exports = (model, options) ->
     getSnapshot: (docName, callback) ->
       @doAuth {docName}, 'get snapshot', callback, ->
         model.getSnapshot docName, callback
-    
+
+    getVersions: (docName, v, callback) ->
+      @doAuth {docName}, 'get version', callback, ->
+        model.getVersions docName, v, callback
+
     create: (docName, type, meta, callback) ->
       # We don't check that types[type.name] == type. That might be important at some point.
       type = types[type] if typeof type == 'string'
@@ -107,7 +112,7 @@ module.exports = (model, options) ->
     delete: (docName, callback) ->
       @doAuth {docName}, 'delete', callback, =>
         model.delete docName, callback
-    
+
     # Open the named document for reading. Just like model.listen, version is optional.
     listen: (docName, version, listener, callback) ->
       authOps = if version?
@@ -132,7 +137,7 @@ module.exports = (model, options) ->
             callback? error, v
 
     removeListener: (docName) ->
-      throw new Error 'Document is not open' unless @listeners[docName]
+      return unless @listeners[docName]
       model.removeListener docName, @listeners[docName]
       delete @listeners[docName]
 

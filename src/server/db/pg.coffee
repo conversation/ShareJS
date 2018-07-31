@@ -27,6 +27,8 @@ pg = require('pg').native
 
 defaultOptions =
   schema: 'sharejs'
+  client: null                      # An optional instance of pg.Client
+  uri: null                         # An optional uri for connection
   create_tables_automatically: true
   operations_table: 'ops'
   snapshot_table: 'snapshots'
@@ -37,7 +39,8 @@ module.exports = PgDb = (options) ->
   options ?= {}
   options[k] ?= v for k, v of defaultOptions
 
-  client = new pg.Client options.uri
+  client = options.client or new pg.Client options
+
   client.connect()
 
   snapshot_table = options.schema and "#{options.schema}.#{options.snapshot_table}" or options.snapshot_table
@@ -56,8 +59,8 @@ module.exports = PgDb = (options) ->
         doc text NOT NULL,
         v int4 NOT NULL,
         type text NOT NULL,
-        snapshot text NOT NULL,
-        meta text NOT NULL,
+        snapshot jsonb NOT NULL,
+        meta jsonb NOT NULL,
         created_at timestamp(6) NOT NULL,
         CONSTRAINT snapshots_pkey PRIMARY KEY (doc, v)
       );
@@ -65,8 +68,8 @@ module.exports = PgDb = (options) ->
       CREATE TABLE #{operations_table} (
         doc text NOT NULL,
         v int4 NOT NULL,
-        op text NOT NULL,
-        meta text NOT NULL,
+        op jsonb NOT NULL,
+        meta jsonb NOT NULL,
         CONSTRAINT operations_pkey PRIMARY KEY (doc, v)
       );
     """
@@ -82,9 +85,9 @@ module.exports = PgDb = (options) ->
   @create = (docName, docData, callback) ->
     sql = """
       INSERT INTO #{snapshot_table} ("doc", "v", "snapshot", "meta", "type", "created_at")
-        VALUES ($1, $2, $3, $4, $5, now())
+        VALUES ($1, $2, ($3)::jsonb, $4, $5, now() at time zone 'UTC')
     """
-    values = [docName, docData.v, JSON.stringify(docData.snapshot), JSON.stringify(docData.meta), docData.type]
+    values = [docName, docData.v, JSON.stringify(docData.snapshot), docData.meta, docData.type]
     client.query sql, values, (error, result) ->
       if !error?
         callback?()
@@ -131,8 +134,8 @@ module.exports = PgDb = (options) ->
         row = result.rows[0]
         data =
           v:        row.v
-          snapshot: JSON.parse(row.snapshot)
-          meta:     JSON.parse(row.meta)
+          snapshot: row.snapshot
+          meta:     row.meta
           type:     row.type
         callback? null, data
       else if !error?
@@ -143,10 +146,10 @@ module.exports = PgDb = (options) ->
   @writeSnapshot = (docName, docData, dbMeta, callback) ->
     sql = """
       UPDATE #{snapshot_table}
-      SET "v" = $2, "snapshot" = $3, "meta" = $4
+      SET "v" = $2, "snapshot" = ($3)::jsonb, "meta" = $4
       WHERE "doc" = $1
     """
-    values = [docName, docData.v, JSON.stringify(docData.snapshot), JSON.stringify(docData.meta)]
+    values = [docName, docData.v, JSON.stringify(docData.snapshot), docData.meta]
     client.query sql, values, (error, result) ->
       if !error?
         callback?()
@@ -167,9 +170,9 @@ module.exports = PgDb = (options) ->
       if !error?
         data = result.rows.map (row) ->
           return {
-            op:   JSON.parse row.op
+            op:   row.op
             # v:    row.version
-            meta: JSON.parse row.meta
+            meta: row.meta
           }
         callback? null, data
       else
@@ -178,9 +181,9 @@ module.exports = PgDb = (options) ->
   @writeOp = (docName, opData, callback) ->
     sql = """
       INSERT INTO #{operations_table} ("doc", "op", "v", "meta")
-        VALUES ($1, $2, $3, $4)
+        VALUES ($1, ($2)::jsonb, $3, $4)
     """
-    values = [docName, JSON.stringify(opData.op), opData.v, JSON.stringify(opData.meta)]
+    values = [docName, JSON.stringify(opData.op), opData.v, opData.meta]
     client.query sql, values, (error, result) ->
       if !error?
         callback?()
