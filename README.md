@@ -1,19 +1,11 @@
-ShareJS
+ShareJS [![Build Status](https://secure.travis-ci.org/conversation/ShareJS.png)](http://travis-ci.org/conversation/ShareJS)
 =======
 
-This is a little server (& client library) to allow concurrent editing of any kind of content. The server runs on NodeJS and the client works in NodeJS or a web browser.
+**This is a fork of version 0.6.3 of the original [ShareJS](https://github.com/josephg/ShareJS) library.**
+
+ShareJS is a little server (& client library) to allow concurrent editing of any kind of content. The server runs on NodeJS and the client works in NodeJS or a web browser.
 
 ShareJS currently supports operational transform on plain-text and arbitrary JSON data.
-
-**Immerse yourself in [API Documentation](https://github.com/josephg/ShareJS/wiki).**
-
-**Visit [Google groups](https://groups.google.com/forum/?fromgroups#!forum/sharejs) for discussions and announcements**
-
-**Check out the [live interactive demos](http://sharejs.org/).**
-
-> Note: CI sometimes breaks for random reasons even though the tests work locally. Don't stress!
-[![Build Status](https://secure.travis-ci.org/josephg/ShareJS.png)](http://travis-ci.org/josephg/ShareJS)
-
 
 Browser support
 ---------------
@@ -40,13 +32,13 @@ If you want redis support, you'll need to install redis:
 ### From source
 
 Install redis (optional)
-    
+
 * Mac:
 
         # brew install redis
 
 * Linux:
-   
+
         # sudo apt-get install redis
 
 Then:
@@ -56,7 +48,7 @@ Then:
     # npm install redis   # If you want redis support
     # npm link
 
-Run the tests: (you will need nodeunit for this!)
+Run the tests: (you will need an old version of nodeunit for this: `npm install -g nodeunit@0.6.4`)
 
     # cake test
 
@@ -109,7 +101,7 @@ There are two ways to run a sharejs server:
 3. If you are just mucking around, run:
 
         # sharejs-exampleserver
-  
+
     This will run a simple server on port 8000, and host all the example code there. Run it and check out http://localhost:8000/ . The example server stores everything in ram, so don't get too attached to your data.
 
     > If you're running sharejs from source, you can launch the example server by running `bin/exampleserver`.
