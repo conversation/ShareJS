@@ -163,7 +163,7 @@ module.exports = testCase
   'Cannot do anything if the server doesnt allow client connections': (test) ->
     @auth = (agent, action) ->
       test.strictEqual action.type, 'connect'
-      test.ok agent.remoteAddress in ['localhost', '127.0.0.1'] # Is there a nicer way to do this?
+      test.ok agent.remoteAddress in ['localhost', '127.0.0.1', '::ffff:127.0.0.1'] # Is there a nicer way to do this?
       test.strictEqual typeof agent.sessionId, 'string'
       test.ok agent.sessionId.length > 5
       test.ok agent.connectTime

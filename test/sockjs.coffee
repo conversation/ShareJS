@@ -29,17 +29,17 @@ expectData = (socket, expectedData, callback) ->
         delete expected.meta
       assert.deepEqual expected, data
       if expectedData.length == 0
-        socket.onmessage = (data) -> console.warn 'xxxx', data   
+        socket.onmessage = (data) -> console.warn 'xxxx', data
         callback()
 
 class WSSocket
-  
+
   constructor: (url, callback)->
 
     # Open a new sockjs websocket session to the server
     ws = new WebSocketClient
     ws.connect url
-   
+
     ws.on 'connectFailed', (error) -> console.error "Failed to connect: #{error}"
 
     ws.on 'connect', (@connection) => callback(@)
@@ -61,7 +61,7 @@ class WSSocket
 
 
   send: (msg) -> @connection.send JSON.stringify(msg)
-  
+
   close: -> @connection.close()
 
 
@@ -90,7 +90,7 @@ module.exports = testCase
             @id = data.auth
             assert.ok @id
             callback()
-        
+
           socket.onerror = (e) -> console.warn 'eeee', e
           socket.send({auth:null});
 
@@ -100,7 +100,7 @@ module.exports = testCase
     catch e
       console.log e.stack
       throw e
-  
+
   tearDown: (callback) ->
     @socket.close()
 
@@ -108,7 +108,7 @@ module.exports = testCase
     @server.on 'close', callback
     @server.close()
 
-  'open an existing document with no version specified opens the document': (test) ->  
+  'open an existing document with no version specified opens the document': (test) ->
     @model.create @name, 'simple', =>
       @socket.send {doc:@name, open:true}
       @expect {doc:@name, v:0, open:true}, =>
@@ -123,7 +123,7 @@ module.exports = testCase
           @model.applyOp @name, {op:{position:0, text:'hi'}, v:0}, =>
             @expect {v:0, op:{position:0, text:'hi'}, meta:ANYOBJECT}, ->
               test.done()
-    
+
     'open a nonexistant document with create:true creates the document': (test) ->
       @socket.send {doc:@name, open:true, create:true, type:'simple'}
       @expect {doc:@name, open:true, create:true, v:0}, =>
@@ -144,7 +144,7 @@ module.exports = testCase
       @socket.send {doc:@name, open:true, v:0}
       @expect {doc:@name, open:false, error:'Document does not exist'}, =>
         test.done()
-    
+
     'open a nonexistant document with snapshot:null fails normally': (test) ->
       @socket.send {doc:@name, open:true, snapshot:null}
       @expect {doc:@name, open:false, snapshot:null, error:'Document does not exist'}, =>
@@ -154,7 +154,7 @@ module.exports = testCase
       @socket.send {doc:@name, snapshot:null}
       @expect {doc:@name, snapshot:null, error:'Document does not exist'}, =>
         test.done()
-    
+
     'open a nonexistant document with create:true and snapshot:null does not return the snapshot': (test) ->
       # The snapshot can be inferred.
       @socket.send {doc:@name, open:true, create:true, type:'text', snapshot:null}
@@ -166,7 +166,7 @@ module.exports = testCase
         @socket.send {doc:@name, open:true, type:'text'}
         @expect {doc:@name, open:false, error:'Type mismatch'}, =>
           test.done()
-    
+
     'open an existing document with create:true opens the current document': (test) ->
       @model.create @name, 'simple', =>
         @model.applyOp @name, {op:{position:0, text:'hi'}, v:0}, =>
@@ -191,7 +191,7 @@ module.exports = testCase
           delete docData.meta
           test.deepEqual docData, {snapshot:{str:''}, v:0, type:types.simple}
           test.done()
-    
+
     'create a document that already exists returns create:false': (test) ->
       @model.create @name, 'simple', =>
         @socket.send {doc:@name, create:true, type:'simple'}
@@ -291,7 +291,7 @@ module.exports = testCase
 
         @expect {v:0, op:[{i:'hi', p:0}], meta:ANYOBJECT}, ->
           test.done()
-    
+
     'doc names are sent in ops when necessary': (test) ->
       name1 = newDocName()
       name2 = newDocName()
@@ -370,7 +370,7 @@ module.exports = testCase
     'Cannot connect if auth rejects you': (test) ->
       @auth = (agent, action) ->
         test.strictEqual action.type, 'connect'
-        test.ok agent.remoteAddress in ['localhost', '127.0.0.1'] # Is there a nicer way to do this?
+        test.ok agent.remoteAddress in ['localhost', '127.0.0.1', '::ffff:127.0.0.1'] # Is there a nicer way to do this?
         test.strictEqual typeof agent.sessionId, 'string'
         test.ok agent.sessionId.length > 5
         test.ok agent.connectTime
