@@ -17,11 +17,12 @@ task 'test', 'Run all tests', (options) ->
   console.log 'Running tests... (is your webclient up-to-date and nodeunit installed?)'
 
   config.silent = true unless options['verbose']
-  exec 'nodeunit tests.coffee', (err, stdout, stderr) ->
-    if err == 0
+  exec 'nodeunit tests.coffee', (status, stdout, stderr) ->
+    if status == 0
       console.log 'All tests succeeded!'
     else
-      console.log "Some tests failed (error: #{err}). Try --verbose."
+      console.log "Some tests failed (error: #{status}). Try --verbose."
+    process.exit(1) if status isnt 0
   config.silent = false
 
 # This is only needed to be able to refer to the line numbers of crashes
