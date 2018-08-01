@@ -30,36 +30,14 @@ task 'build', 'Build the .js files', ->
   console.log 'Compiling Coffee from src to lib'
   exec "coffee --compile --bare --output lib/ src/"
 
-makeUgly = (infile, outfile) ->
-  # Uglify compile the JS
-  source = cat infile
-
-  {parser, uglify} = require 'uglify-js'
-
-  opts =
-    defines:
-      WEB: ['name', 'true']
-
-  ast = parser.parse source
-  ast = uglify.ast_lift_variables ast
-  ast = uglify.ast_mangle ast, opts
-  ast = uglify.ast_squeeze ast
-  code = uglify.gen_code ast
-
-  smaller = Math.round((1 - (code.length / source.length)) * 100)
-
-  code.to outfile
-
-  console.log "Uglified: #{smaller}% smaller (#{code.length} bytes} written to #{outfile}"
-
 expandNames = (names) -> ("src/#{c}.coffee" for c in names).join ' '
 
 compile = (filenames, dest) ->
+  prepend = require "prepend-file"
+
   filenames = expandNames filenames
-  # I would really rather do this in pure JS.
-  exec "coffee -j #{dest}.uncompressed.js -c #{filenames}"
-  console.log "Uglifying #{dest}"
-  makeUgly "#{dest}.uncompressed.js", "#{dest}.js"
+  exec "coffee -j #{dest}.js -c #{filenames}"
+  prepend.sync "#{dest}.js", "var WEB=true;"
 
 buildtype = (name) ->
   filenames = ['types/web-prelude', "types/#{name}"]

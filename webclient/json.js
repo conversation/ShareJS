@@ -1,1 +1,909 @@
-(function(){var e,t,n,r,i,s,o,u,a,f=!0,l=[].slice,c=window.sharejs;typeof f!="undefined"&&f!==null?u=c.types.text:u=require("./text"),s={},s.name="json",s.create=function(){return null},s.invertComponent=function(e){var t={p:e.p};return e.si!==void 0&&(t.sd=e.si),e.sd!==void 0&&(t.si=e.sd),e.oi!==void 0&&(t.od=e.oi),e.od!==void 0&&(t.oi=e.od),e.li!==void 0&&(t.ld=e.li),e.ld!==void 0&&(t.li=e.ld),e.na!==void 0&&(t.na=-e.na),e.lm!==void 0&&(t.lm=e.p[e.p.length-1],t.p=e.p.slice(0,e.p.length-1).concat([e.lm])),t},s.invert=function(e){var t,n,r,i=e.slice().reverse(),o=[];for(n=0,r=i.length;n<r;n++)t=i[n],o.push(s.invertComponent(t));return o},s.checkValidOp=function(){},i=function(e){return Object.prototype.toString.call(e)==="[object Array]"},s.checkList=function(e){if(!i(e))throw new Error("Referenced element not a list")},s.checkObj=function(e){if(e.constructor!==Object)throw new Error("Referenced element not an object (it was "+JSON.stringify(e)+")")},s.apply=function(e,n){var r,i,o,u,a,f,l,c,h,p,d,v,m,g,y;s.checkValidOp(n),n=t(n),i={data:t(e)};try{for(f=d=0,m=n.length;d<m;f=++d){r=n[f],h=null,p=null,u=i,l="data",y=r.p;for(v=0,g=y.length;v<g;v++){c=y[v],h=u,p=l,u=u[l],l=c;if(h==null)throw new Error("Path invalid")}if(r.na!==void 0){if(typeof u[l]!="number")throw new Error("Referenced element not a number");u[l]+=r.na}else if(r.si!==void 0){if(typeof u!="string")throw new Error("Referenced element not a string (it was "+JSON.stringify(u)+")");h[p]=u.slice(0,l)+r.si+u.slice(l)}else if(r.sd!==void 0){if(typeof u!="string")throw new Error("Referenced element not a string");if(u.slice(l,l+r.sd.length)!==r.sd)throw new Error("Deleted string does not match");h[p]=u.slice(0,l)+u.slice(l+r.sd.length)}else if(r.li!==void 0&&r.ld!==void 0)s.checkList(u),u[l]=r.li;else if(r.li!==void 0)s.checkList(u),u.splice(l,0,r.li);else if(r.ld!==void 0)s.checkList(u),u.splice(l,1);else if(r.lm!==void 0)s.checkList(u),r.lm!==l&&(o=u[l],u.splice(l,1),u.splice(r.lm,0,o));else if(r.oi!==void 0)s.checkObj(u),u[l]=r.oi;else{if(r.od===void 0)throw new Error("invalid / missing instruction in op");s.checkObj(u),delete u[l]}}}catch(b){throw a=b,a}return i.data},s.pathMatches=function(e,t,n){var r,i,s,o;if(e.length!==t.length)return!1;for(r=s=0,o=e.length;s<o;r=++s){i=e[r];if(i!==t[r]&&(!n||r!==e.length-1))return!1}return!0},s.append=function(e,n){var r;return n=t(n),e.length!==0&&s.pathMatches(n.p,(r=e[e.length-1]).p)?r.na!==void 0&&n.na!==void 0?e[e.length-1]={p:r.p,na:r.na+n.na}:r.li!==void 0&&n.li===void 0&&n.ld===r.li?r.ld!==void 0?delete r.li:e.pop():r.od!==void 0&&r.oi===void 0&&n.oi!==void 0&&n.od===void 0?r.oi=n.oi:n.lm!==void 0&&n.p[n.p.length-1]===n.lm?null:e.push(n):e.push(n)},s.compose=function(e,n){var r,i,o,u;s.checkValidOp(e),s.checkValidOp(n),i=t(e);for(o=0,u=n.length;o<u;o++)r=n[o],s.append(i,r);return i},s.normalize=function(e){var t,n,r,o=[];i(e)||(e=[e]);for(n=0,r=e.length;n<r;n++)t=e[n],t.p==null&&(t.p=[]),s.append(o,t);return o},t=function(e){return JSON.parse(JSON.stringify(e))},s.canOpAffectOp=function(e,t){var n,r,i,s;if(e.length===0)return!0;if(t.length===0)return!1;t=t.slice(0,t.length-1),e=e.slice(0,e.length-1);for(n=i=0,s=e.length;i<s;n=++i){r=e[n];if(n>=t.length)return!1;if(r!==t[n])return!1}return!0},s.transformComponent=function(e,n,r,i){var o,a,f,l,c,h,p,d,v,m,g,y,b,w,E,S,x,T,N;n=t(n),n.na!==void 0&&n.p.push(0),r.na!==void 0&&r.p.push(0),s.canOpAffectOp(r.p,n.p)&&(o=r.p.length-1),s.canOpAffectOp(n.p,r.p)&&(a=n.p.length-1),c=n.p.length,v=r.p.length,n.na!==void 0&&n.p.pop(),r.na!==void 0&&r.p.pop();if(r.na)return a!=null&&v>=c&&r.p[a]===n.p[a]&&(n.ld!==void 0?(d=t(r),d.p=d.p.slice(c),n.ld=s.apply(t(n.ld),[d])):n.od!==void 0&&(d=t(r),d.p=d.p.slice(c),n.od=s.apply(t(n.od),[d]))),s.append(e,n),e;a!=null&&v>c&&n.p[a]===r.p[a]&&(n.ld!==void 0?(d=t(r),d.p=d.p.slice(c),n.ld=s.apply(t(n.ld),[d])):n.od!==void 0&&(d=t(r),d.p=d.p.slice(c),n.od=s.apply(t(n.od),[d])));if(o!=null){f=c===v;if(r.na===void 0)if(r.si!==void 0||r.sd!==void 0){if(n.si!==void 0||n.sd!==void 0){if(!f)throw new Error("must be a string?");l=function(e){var t={p:e.p[e.p.length-1]};return e.si!=null?t.i=e.si:t.d=e.sd,t},E=l(n),S=l(r),b=[],u._tc(b,E,S,i);for(T=0,N=b.length;T<N;T++)w=b[T],p={p:n.p.slice(0,o)},p.p.push(w.p),w.i!=null&&(p.si=w.i),w.d!=null&&(p.sd=w.d),s.append(e,p);return e}}else if(r.li!==void 0&&r.ld!==void 0){if(r.p[o]===n.p[o]){if(!f)return e;if(n.ld!==void 0){if(n.li===void 0||i!=="left")return e;n.ld=t(r.li)}}}else if(r.li!==void 0)n.li!==void 0&&n.ld===void 0&&f&&n.p[o]===r.p[o]?i==="right"&&n.p[o]++:r.p[o]<=n.p[o]&&n.p[o]++,n.lm!==void 0&&f&&r.p[o]<=n.lm&&n.lm++;else if(r.ld!==void 0){if(n.lm!==void 0&&f){if(r.p[o]===n.p[o])return e;y=r.p[o],h=n.p[o],x=n.lm,(y<x||y===x&&h<x)&&n.lm--}if(r.p[o]<n.p[o])n.p[o]--;else if(r.p[o]===n.p[o]){if(v<c)return e;if(n.ld!==void 0){if(n.li===void 0)return e;delete n.ld}}}else if(r.lm!==void 0)if(n.lm!==void 0&&c===v){h=n.p[o],x=n.lm,m=r.p[o],g=r.lm;if(m!==g)if(h===m){if(i!=="left")return e;n.p[o]=g,h===x&&(n.lm=g)}else h>m&&n.p[o]--,h>g?n.p[o]++:h===g&&m>g&&(n.p[o]++,h===x&&n.lm++),x>m?n.lm--:x===m&&x>h&&n.lm--,x>g?n.lm++:x===g&&(g>m&&x>h||g<m&&x<h?i==="right"&&n.lm++:x>h?n.lm++:x===m&&n.lm--)}else n.li!==void 0&&n.ld===void 0&&f?(h=r.p[o],x=r.lm,y=n.p[o],y>h&&n.p[o]--,y>x&&n.p[o]++):(h=r.p[o],x=r.lm,y=n.p[o],y===h?n.p[o]=x:(y>h&&n.p[o]--,y>x?n.p[o]++:y===x&&h>x&&n.p[o]++));else if(r.oi!==void 0&&r.od!==void 0){if(n.p[o]===r.p[o]){if(n.oi===void 0||!f)return e;if(i==="right")return e;n.od=r.oi}}else if(r.oi!==void 0){if(n.oi!==void 0&&n.p[o]===r.p[o]){if(i!=="left")return e;s.append(e,{p:n.p,od:r.oi})}}else if(r.od!==void 0&&n.p[o]===r.p[o]){if(!f)return e;if(n.oi===void 0)return e;delete n.od}}return s.append(e,n),e},typeof f!="undefined"&&f!==null?(c.types||(c.types={}),c._bt(s,s.transformComponent,s.checkValidOp,s.append),c.types.json=s):(module.exports=s,require("./helpers").bootstrapTransform(s,s.transformComponent,s.checkValidOp,s.append)),typeof f=="undefined"&&(s=require("./json")),typeof f!="undefined"&&f!==null&&(r=c.extendDoc,c.extendDoc=function(t,n){return e.prototype[t]=n,r(t,n)}),n=function(e){return e.length===1&&e[0].constructor===Array?e[0]:e},e=function(){function e(e,t){this.doc=e,this.path=t}return e.prototype.at=function(){var e=1<=arguments.length?l.call(arguments,0):[];return this.doc.at(this.path.concat(n(e)))},e.prototype.parent=function(){return this.path.length?this.doc.at(this.path.slice(0,this.path.length-1)):void 0},e.prototype.get=function(){return this.doc.getAt(this.path)},e.prototype.set=function(e,t){return this.doc.setAt(this.path,e,t)},e.prototype.insert=function(e,t,n){return this.doc.insertAt(this.path,e,t,n)},e.prototype.del=function(e,t,n){return this.doc.deleteTextAt(this.path,t,e,n)},e.prototype.remove=function(e){return this.doc.removeAt(this.path,e)},e.prototype.push=function(e,t){return this.insert(this.get().length,e,t)},e.prototype.move=function(e,t,n){return this.doc.moveAt(this.path,e,t,n)},e.prototype.add=function(e,t){return this.doc.addAt(this.path,e,t)},e.prototype.on=function(e,t){return this.doc.addListener(this.path,e,t)},e.prototype.removeListener=function(e){return this.doc.removeListener(e)},e.prototype.getLength=function(){return this.get().length},e.prototype.getText=function(){return this.get()},e}(),a=function(e,t){var n,r,i,s={data:e},o="data",u=s;for(r=0,i=t.length;r<i;r++){n=t[r],u=u[o],o=n;if(typeof u=="undefined")throw new Error("bad path")}return{elem:u,key:o}},o=function(e,t){var n,r,i,s;if(e.length!==t.length)return!1;for(r=i=0,s=e.length;i<s;r=++i){n=e[r];if(n!==t[r])return!1}return!0},s.api={provides:{json:!0},at:function(){var t=1<=arguments.length?l.call(arguments,0):[];return new e(this,n(t))},get:function(){return this.snapshot},set:function(e,t){return this.setAt([],e,t)},getAt:function(e){var t=a(this.snapshot,e),n=t.elem,r=t.key;return n[r]},setAt:function(e,t,n){var r=a(this.snapshot,e),i=r.elem,s=r.key,o={p:e};if(i.constructor===Array)o.li=t,typeof i[s]!="undefined"&&(o.ld=i[s]);else{if(typeof i!="object")throw new Error("bad path");o.oi=t,typeof i[s]!="undefined"&&(o.od=i[s])}return this.submitOp([o],n)},removeAt:function(e,t){var n,r=a(this.snapshot,e),i=r.elem,s=r.key;if(typeof i[s]=="undefined")throw new Error("no element at that path");n={p:e};if(i.constructor===Array)n.ld=i[s];else{if(typeof i!="object")throw new Error("bad path");n.od=i[s]}return this.submitOp([n],t)},insertAt:function(e,t,n,r){var i=a(this.snapshot,e),s=i.elem,o=i.key,u={p:e.concat(t)};return s[o].constructor===Array?u.li=n:typeof s[o]=="string"&&(u.si=n),this.submitOp([u],r)},moveAt:function(e,t,n,r){var i=[{p:e.concat(t),lm:n}];return this.submitOp(i,r)},addAt:function(e,t,n){var r=[{p:e,na:t}];return this.submitOp(r,n)},deleteTextAt:function(e,t,n,r){var i=a(this.snapshot,e),s=i.elem,o=i.key,u=[{p:e.concat(n),sd:s[o].slice(n,n+t)}];return this.submitOp(u,r)},addListener:function(e,t,n){var r={path:e,event:t,cb:n};return this._listeners.push(r),r},removeListener:function(e){var t=this._listeners.indexOf(e);return t<0?!1:(this._listeners.splice(t,1),!0)},_register:function(){return this._listeners=[],this.on("change",function(e){var t,n,r,i,s,o,u,a,f,l,c,h=[];for(u=0,f=e.length;u<f;u++){t=e[u];if(t.na!==void 0||t.si!==void 0||t.sd!==void 0)continue;s=[],c=this._listeners;for(r=a=0,l=c.length;a<l;r=++a){i=c[r],n={p:i.path,na:0},o=this.type.transformComponent([],n,t,"left");if(o.length===0)s.push(r);else{if(o.length!==1)throw new Error("Bad assumption in json-api: xforming an 'si' op will always result in 0 or 1 components.");i.path=o[0].p}}s.sort(function(e,t){return t-e}),h.push(function(){var e,t,n=[];for(e=0,t=s.length;e<t;e++)r=s[e],n.push(this._listeners.splice(r,1));return n}.call(this))}return h}),this.on("remoteop",function(e){var t,n,r,i,s,u,a,f,l=[];for(a=0,f=e.length;a<f;a++)t=e[a],s=t.na===void 0?t.p.slice(0,t.p.length-1):t.p,l.push(function(){var e,a,f,l=this._listeners,c=[];for(e=0,a=l.length;e<a;e++){f=l[e],u=f.path,i=f.event,n=f.cb;if(o(u,s))switch(i){case"insert":t.li!==void 0&&t.ld===void 0?c.push(n(t.p[t.p.length-1],t.li)):t.oi!==void 0&&t.od===void 0?c.push(n(t.p[t.p.length-1],t.oi)):t.si!==void 0?c.push(n(t.p[t.p.length-1],t.si)):c.push(void 0);break;case"delete":t.li===void 0&&t.ld!==void 0?c.push(n(t.p[t.p.length-1],t.ld)):t.oi===void 0&&t.od!==void 0?c.push(n(t.p[t.p.length-1],t.od)):t.sd!==void 0?c.push(n(t.p[t.p.length-1],t.sd)):c.push(void 0);break;case"replace":t.li!==void 0&&t.ld!==void 0?c.push(n(t.p[t.p.length-1],t.ld,t.li)):t.oi!==void 0&&t.od!==void 0?c.push(n(t.p[t.p.length-1],t.od,t.oi)):c.push(void 0);break;case"move":t.lm!==void 0?c.push(n(t.p[t.p.length-1],t.lm)):c.push(void 0);break;case"add":t.na!==void 0?c.push(n(t.na)):c.push(void 0);break;default:c.push(void 0)}else this.type.canOpAffectOp(u,s)?i==="child op"?(r=t.p.slice(u.length),c.push(n(r,t))):c.push(void 0):c.push(void 0)}return c}.call(this));return l})}}}).call(this)
+var WEB=true;// Generated by CoffeeScript 1.7.0
+(function() {
+  /**
+   @const
+   @type {boolean}
+*/
+var WEB = true;
+;
+  var SubDoc, clone, depath, exports, extendDoc, isArray, json, pathEquals, text, traverse,
+    __slice = [].slice;
+
+  exports = window['sharejs'];
+
+  if (typeof WEB !== "undefined" && WEB !== null) {
+    text = exports.types.text;
+  } else {
+    text = require('./text');
+  }
+
+  json = {};
+
+  json.name = 'json';
+
+  json.create = function() {
+    return null;
+  };
+
+  json.invertComponent = function(c) {
+    var c_;
+    c_ = {
+      p: c.p
+    };
+    if (c.si !== void 0) {
+      c_.sd = c.si;
+    }
+    if (c.sd !== void 0) {
+      c_.si = c.sd;
+    }
+    if (c.oi !== void 0) {
+      c_.od = c.oi;
+    }
+    if (c.od !== void 0) {
+      c_.oi = c.od;
+    }
+    if (c.li !== void 0) {
+      c_.ld = c.li;
+    }
+    if (c.ld !== void 0) {
+      c_.li = c.ld;
+    }
+    if (c.na !== void 0) {
+      c_.na = -c.na;
+    }
+    if (c.lm !== void 0) {
+      c_.lm = c.p[c.p.length - 1];
+      c_.p = c.p.slice(0, c.p.length - 1).concat([c.lm]);
+    }
+    return c_;
+  };
+
+  json.invert = function(op) {
+    var c, _i, _len, _ref, _results;
+    _ref = op.slice().reverse();
+    _results = [];
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      c = _ref[_i];
+      _results.push(json.invertComponent(c));
+    }
+    return _results;
+  };
+
+  json.checkValidOp = function(op) {};
+
+  isArray = function(o) {
+    return Object.prototype.toString.call(o) === '[object Array]';
+  };
+
+  json.checkList = function(elem) {
+    if (!isArray(elem)) {
+      throw new Error('Referenced element not a list');
+    }
+  };
+
+  json.checkObj = function(elem) {
+    if (elem.constructor !== Object) {
+      throw new Error("Referenced element not an object (it was " + (JSON.stringify(elem)) + ")");
+    }
+  };
+
+  json.apply = function(snapshot, op) {
+    var c, container, e, elem, error, i, key, p, parent, parentkey, _i, _j, _len, _len1, _ref;
+    json.checkValidOp(op);
+    op = clone(op);
+    container = {
+      data: clone(snapshot)
+    };
+    try {
+      for (i = _i = 0, _len = op.length; _i < _len; i = ++_i) {
+        c = op[i];
+        parent = null;
+        parentkey = null;
+        elem = container;
+        key = 'data';
+        _ref = c.p;
+        for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
+          p = _ref[_j];
+          parent = elem;
+          parentkey = key;
+          elem = elem[key];
+          key = p;
+          if (parent == null) {
+            throw new Error('Path invalid');
+          }
+        }
+        if (c.na !== void 0) {
+          if (typeof elem[key] !== 'number') {
+            throw new Error('Referenced element not a number');
+          }
+          elem[key] += c.na;
+        } else if (c.si !== void 0) {
+          if (typeof elem !== 'string') {
+            throw new Error("Referenced element not a string (it was " + (JSON.stringify(elem)) + ")");
+          }
+          parent[parentkey] = elem.slice(0, key) + c.si + elem.slice(key);
+        } else if (c.sd !== void 0) {
+          if (typeof elem !== 'string') {
+            throw new Error('Referenced element not a string');
+          }
+          if (elem.slice(key, key + c.sd.length) !== c.sd) {
+            throw new Error('Deleted string does not match');
+          }
+          parent[parentkey] = elem.slice(0, key) + elem.slice(key + c.sd.length);
+        } else if (c.li !== void 0 && c.ld !== void 0) {
+          json.checkList(elem);
+          elem[key] = c.li;
+        } else if (c.li !== void 0) {
+          json.checkList(elem);
+          elem.splice(key, 0, c.li);
+        } else if (c.ld !== void 0) {
+          json.checkList(elem);
+          elem.splice(key, 1);
+        } else if (c.lm !== void 0) {
+          json.checkList(elem);
+          if (c.lm !== key) {
+            e = elem[key];
+            elem.splice(key, 1);
+            elem.splice(c.lm, 0, e);
+          }
+        } else if (c.oi !== void 0) {
+          json.checkObj(elem);
+          elem[key] = c.oi;
+        } else if (c.od !== void 0) {
+          json.checkObj(elem);
+          delete elem[key];
+        } else {
+          throw new Error('invalid / missing instruction in op');
+        }
+      }
+    } catch (_error) {
+      error = _error;
+      throw error;
+    }
+    return container.data;
+  };
+
+  json.pathMatches = function(p1, p2, ignoreLast) {
+    var i, p, _i, _len;
+    if (p1.length !== p2.length) {
+      return false;
+    }
+    for (i = _i = 0, _len = p1.length; _i < _len; i = ++_i) {
+      p = p1[i];
+      if (p !== p2[i] && (!ignoreLast || i !== p1.length - 1)) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  json.append = function(dest, c) {
+    var last;
+    c = clone(c);
+    if (dest.length !== 0 && json.pathMatches(c.p, (last = dest[dest.length - 1]).p)) {
+      if (last.na !== void 0 && c.na !== void 0) {
+        return dest[dest.length - 1] = {
+          p: last.p,
+          na: last.na + c.na
+        };
+      } else if (last.li !== void 0 && c.li === void 0 && c.ld === last.li) {
+        if (last.ld !== void 0) {
+          return delete last.li;
+        } else {
+          return dest.pop();
+        }
+      } else if (last.od !== void 0 && last.oi === void 0 && c.oi !== void 0 && c.od === void 0) {
+        return last.oi = c.oi;
+      } else if (c.lm !== void 0 && c.p[c.p.length - 1] === c.lm) {
+        return null;
+      } else {
+        return dest.push(c);
+      }
+    } else {
+      return dest.push(c);
+    }
+  };
+
+  json.compose = function(op1, op2) {
+    var c, newOp, _i, _len;
+    json.checkValidOp(op1);
+    json.checkValidOp(op2);
+    newOp = clone(op1);
+    for (_i = 0, _len = op2.length; _i < _len; _i++) {
+      c = op2[_i];
+      json.append(newOp, c);
+    }
+    return newOp;
+  };
+
+  json.normalize = function(op) {
+    var c, newOp, _i, _len;
+    newOp = [];
+    if (!isArray(op)) {
+      op = [op];
+    }
+    for (_i = 0, _len = op.length; _i < _len; _i++) {
+      c = op[_i];
+      if (c.p == null) {
+        c.p = [];
+      }
+      json.append(newOp, c);
+    }
+    return newOp;
+  };
+
+  clone = function(o) {
+    return JSON.parse(JSON.stringify(o));
+  };
+
+  json.canOpAffectOp = function(otherPath, path) {
+    var i, p, _i, _len;
+    if (otherPath.length === 0) {
+      return true;
+    }
+    if (path.length === 0) {
+      return false;
+    }
+    path = path.slice(0, path.length - 1);
+    otherPath = otherPath.slice(0, otherPath.length - 1);
+    for (i = _i = 0, _len = otherPath.length; _i < _len; i = ++_i) {
+      p = otherPath[i];
+      if (i >= path.length) {
+        return false;
+      }
+      if (p !== path[i]) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  json.transformComponent = function(dest, c, otherC, type) {
+    var common, common2, commonOperand, convert, cplength, from, jc, oc, otherCplength, otherFrom, otherTo, p, res, tc, tc1, tc2, to, _i, _len;
+    c = clone(c);
+    if (c.na !== void 0) {
+      c.p.push(0);
+    }
+    if (otherC.na !== void 0) {
+      otherC.p.push(0);
+    }
+    if (json.canOpAffectOp(otherC.p, c.p)) {
+      common = otherC.p.length - 1;
+    }
+    if (json.canOpAffectOp(c.p, otherC.p)) {
+      common2 = c.p.length - 1;
+    }
+    cplength = c.p.length;
+    otherCplength = otherC.p.length;
+    if (c.na !== void 0) {
+      c.p.pop();
+    }
+    if (otherC.na !== void 0) {
+      otherC.p.pop();
+    }
+    if (otherC.na) {
+      if ((common2 != null) && otherCplength >= cplength && otherC.p[common2] === c.p[common2]) {
+        if (c.ld !== void 0) {
+          oc = clone(otherC);
+          oc.p = oc.p.slice(cplength);
+          c.ld = json.apply(clone(c.ld), [oc]);
+        } else if (c.od !== void 0) {
+          oc = clone(otherC);
+          oc.p = oc.p.slice(cplength);
+          c.od = json.apply(clone(c.od), [oc]);
+        }
+      }
+      json.append(dest, c);
+      return dest;
+    }
+    if ((common2 != null) && otherCplength > cplength && c.p[common2] === otherC.p[common2]) {
+      if (c.ld !== void 0) {
+        oc = clone(otherC);
+        oc.p = oc.p.slice(cplength);
+        c.ld = json.apply(clone(c.ld), [oc]);
+      } else if (c.od !== void 0) {
+        oc = clone(otherC);
+        oc.p = oc.p.slice(cplength);
+        c.od = json.apply(clone(c.od), [oc]);
+      }
+    }
+    if (common != null) {
+      commonOperand = cplength === otherCplength;
+      if (otherC.na !== void 0) {
+
+      } else if (otherC.si !== void 0 || otherC.sd !== void 0) {
+        if (c.si !== void 0 || c.sd !== void 0) {
+          if (!commonOperand) {
+            throw new Error("must be a string?");
+          }
+          convert = function(component) {
+            var newC;
+            newC = {
+              p: component.p[component.p.length - 1]
+            };
+            if (component.si != null) {
+              newC.i = component.si;
+            } else {
+              newC.d = component.sd;
+            }
+            return newC;
+          };
+          tc1 = convert(c);
+          tc2 = convert(otherC);
+          res = [];
+          text._tc(res, tc1, tc2, type);
+          for (_i = 0, _len = res.length; _i < _len; _i++) {
+            tc = res[_i];
+            jc = {
+              p: c.p.slice(0, common)
+            };
+            jc.p.push(tc.p);
+            if (tc.i != null) {
+              jc.si = tc.i;
+            }
+            if (tc.d != null) {
+              jc.sd = tc.d;
+            }
+            json.append(dest, jc);
+          }
+          return dest;
+        }
+      } else if (otherC.li !== void 0 && otherC.ld !== void 0) {
+        if (otherC.p[common] === c.p[common]) {
+          if (!commonOperand) {
+            return dest;
+          } else if (c.ld !== void 0) {
+            if (c.li !== void 0 && type === 'left') {
+              c.ld = clone(otherC.li);
+            } else {
+              return dest;
+            }
+          }
+        }
+      } else if (otherC.li !== void 0) {
+        if (c.li !== void 0 && c.ld === void 0 && commonOperand && c.p[common] === otherC.p[common]) {
+          if (type === 'right') {
+            c.p[common]++;
+          }
+        } else if (otherC.p[common] <= c.p[common]) {
+          c.p[common]++;
+        }
+        if (c.lm !== void 0) {
+          if (commonOperand) {
+            if (otherC.p[common] <= c.lm) {
+              c.lm++;
+            }
+          }
+        }
+      } else if (otherC.ld !== void 0) {
+        if (c.lm !== void 0) {
+          if (commonOperand) {
+            if (otherC.p[common] === c.p[common]) {
+              return dest;
+            }
+            p = otherC.p[common];
+            from = c.p[common];
+            to = c.lm;
+            if (p < to || (p === to && from < to)) {
+              c.lm--;
+            }
+          }
+        }
+        if (otherC.p[common] < c.p[common]) {
+          c.p[common]--;
+        } else if (otherC.p[common] === c.p[common]) {
+          if (otherCplength < cplength) {
+            return dest;
+          } else if (c.ld !== void 0) {
+            if (c.li !== void 0) {
+              delete c.ld;
+            } else {
+              return dest;
+            }
+          }
+        }
+      } else if (otherC.lm !== void 0) {
+        if (c.lm !== void 0 && cplength === otherCplength) {
+          from = c.p[common];
+          to = c.lm;
+          otherFrom = otherC.p[common];
+          otherTo = otherC.lm;
+          if (otherFrom !== otherTo) {
+            if (from === otherFrom) {
+              if (type === 'left') {
+                c.p[common] = otherTo;
+                if (from === to) {
+                  c.lm = otherTo;
+                }
+              } else {
+                return dest;
+              }
+            } else {
+              if (from > otherFrom) {
+                c.p[common]--;
+              }
+              if (from > otherTo) {
+                c.p[common]++;
+              } else if (from === otherTo) {
+                if (otherFrom > otherTo) {
+                  c.p[common]++;
+                  if (from === to) {
+                    c.lm++;
+                  }
+                }
+              }
+              if (to > otherFrom) {
+                c.lm--;
+              } else if (to === otherFrom) {
+                if (to > from) {
+                  c.lm--;
+                }
+              }
+              if (to > otherTo) {
+                c.lm++;
+              } else if (to === otherTo) {
+                if ((otherTo > otherFrom && to > from) || (otherTo < otherFrom && to < from)) {
+                  if (type === 'right') {
+                    c.lm++;
+                  }
+                } else {
+                  if (to > from) {
+                    c.lm++;
+                  } else if (to === otherFrom) {
+                    c.lm--;
+                  }
+                }
+              }
+            }
+          }
+        } else if (c.li !== void 0 && c.ld === void 0 && commonOperand) {
+          from = otherC.p[common];
+          to = otherC.lm;
+          p = c.p[common];
+          if (p > from) {
+            c.p[common]--;
+          }
+          if (p > to) {
+            c.p[common]++;
+          }
+        } else {
+          from = otherC.p[common];
+          to = otherC.lm;
+          p = c.p[common];
+          if (p === from) {
+            c.p[common] = to;
+          } else {
+            if (p > from) {
+              c.p[common]--;
+            }
+            if (p > to) {
+              c.p[common]++;
+            } else if (p === to) {
+              if (from > to) {
+                c.p[common]++;
+              }
+            }
+          }
+        }
+      } else if (otherC.oi !== void 0 && otherC.od !== void 0) {
+        if (c.p[common] === otherC.p[common]) {
+          if (c.oi !== void 0 && commonOperand) {
+            if (type === 'right') {
+              return dest;
+            } else {
+              c.od = otherC.oi;
+            }
+          } else {
+            return dest;
+          }
+        }
+      } else if (otherC.oi !== void 0) {
+        if (c.oi !== void 0 && c.p[common] === otherC.p[common]) {
+          if (type === 'left') {
+            json.append(dest, {
+              p: c.p,
+              od: otherC.oi
+            });
+          } else {
+            return dest;
+          }
+        }
+      } else if (otherC.od !== void 0) {
+        if (c.p[common] === otherC.p[common]) {
+          if (!commonOperand) {
+            return dest;
+          }
+          if (c.oi !== void 0) {
+            delete c.od;
+          } else {
+            return dest;
+          }
+        }
+      }
+    }
+    json.append(dest, c);
+    return dest;
+  };
+
+  if (typeof WEB !== "undefined" && WEB !== null) {
+    exports.types || (exports.types = {});
+    exports._bt(json, json.transformComponent, json.checkValidOp, json.append);
+    exports.types.json = json;
+  } else {
+    module.exports = json;
+    require('./helpers').bootstrapTransform(json, json.transformComponent, json.checkValidOp, json.append);
+  }
+
+  if (typeof WEB === 'undefined') {
+    json = require('./json');
+  }
+
+  if (typeof WEB !== "undefined" && WEB !== null) {
+    extendDoc = exports.extendDoc;
+    exports.extendDoc = function(name, fn) {
+      SubDoc.prototype[name] = fn;
+      return extendDoc(name, fn);
+    };
+  }
+
+  depath = function(path) {
+    if (path.length === 1 && path[0].constructor === Array) {
+      return path[0];
+    } else {
+      return path;
+    }
+  };
+
+  SubDoc = (function() {
+    function SubDoc(doc, path) {
+      this.doc = doc;
+      this.path = path;
+    }
+
+    SubDoc.prototype.at = function() {
+      var path;
+      path = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+      return this.doc.at(this.path.concat(depath(path)));
+    };
+
+    SubDoc.prototype.parent = function() {
+      if (this.path.length) {
+        return this.doc.at(this.path.slice(0, this.path.length - 1));
+      } else {
+        return void 0;
+      }
+    };
+
+    SubDoc.prototype.get = function() {
+      return this.doc.getAt(this.path);
+    };
+
+    SubDoc.prototype.set = function(value, cb) {
+      return this.doc.setAt(this.path, value, cb);
+    };
+
+    SubDoc.prototype.insert = function(pos, value, cb) {
+      return this.doc.insertAt(this.path, pos, value, cb);
+    };
+
+    SubDoc.prototype.del = function(pos, length, cb) {
+      return this.doc.deleteTextAt(this.path, length, pos, cb);
+    };
+
+    SubDoc.prototype.remove = function(cb) {
+      return this.doc.removeAt(this.path, cb);
+    };
+
+    SubDoc.prototype.push = function(value, cb) {
+      return this.insert(this.get().length, value, cb);
+    };
+
+    SubDoc.prototype.move = function(from, to, cb) {
+      return this.doc.moveAt(this.path, from, to, cb);
+    };
+
+    SubDoc.prototype.add = function(amount, cb) {
+      return this.doc.addAt(this.path, amount, cb);
+    };
+
+    SubDoc.prototype.on = function(event, cb) {
+      return this.doc.addListener(this.path, event, cb);
+    };
+
+    SubDoc.prototype.removeListener = function(l) {
+      return this.doc.removeListener(l);
+    };
+
+    SubDoc.prototype.getLength = function() {
+      return this.get().length;
+    };
+
+    SubDoc.prototype.getText = function() {
+      return this.get();
+    };
+
+    return SubDoc;
+
+  })();
+
+  traverse = function(snapshot, path) {
+    var container, elem, key, p, _i, _len;
+    container = {
+      data: snapshot
+    };
+    key = 'data';
+    elem = container;
+    for (_i = 0, _len = path.length; _i < _len; _i++) {
+      p = path[_i];
+      elem = elem[key];
+      key = p;
+      if (typeof elem === 'undefined') {
+        throw new Error('bad path');
+      }
+    }
+    return {
+      elem: elem,
+      key: key
+    };
+  };
+
+  pathEquals = function(p1, p2) {
+    var e, i, _i, _len;
+    if (p1.length !== p2.length) {
+      return false;
+    }
+    for (i = _i = 0, _len = p1.length; _i < _len; i = ++_i) {
+      e = p1[i];
+      if (e !== p2[i]) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  json.api = {
+    provides: {
+      json: true
+    },
+    at: function() {
+      var path;
+      path = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+      return new SubDoc(this, depath(path));
+    },
+    get: function() {
+      return this.snapshot;
+    },
+    set: function(value, cb) {
+      return this.setAt([], value, cb);
+    },
+    getAt: function(path) {
+      var elem, key, _ref;
+      _ref = traverse(this.snapshot, path), elem = _ref.elem, key = _ref.key;
+      return elem[key];
+    },
+    setAt: function(path, value, cb) {
+      var elem, key, op, _ref;
+      _ref = traverse(this.snapshot, path), elem = _ref.elem, key = _ref.key;
+      op = {
+        p: path
+      };
+      if (elem.constructor === Array) {
+        op.li = value;
+        if (typeof elem[key] !== 'undefined') {
+          op.ld = elem[key];
+        }
+      } else if (typeof elem === 'object') {
+        op.oi = value;
+        if (typeof elem[key] !== 'undefined') {
+          op.od = elem[key];
+        }
+      } else {
+        throw new Error('bad path');
+      }
+      return this.submitOp([op], cb);
+    },
+    removeAt: function(path, cb) {
+      var elem, key, op, _ref;
+      _ref = traverse(this.snapshot, path), elem = _ref.elem, key = _ref.key;
+      if (typeof elem[key] === 'undefined') {
+        throw new Error('no element at that path');
+      }
+      op = {
+        p: path
+      };
+      if (elem.constructor === Array) {
+        op.ld = elem[key];
+      } else if (typeof elem === 'object') {
+        op.od = elem[key];
+      } else {
+        throw new Error('bad path');
+      }
+      return this.submitOp([op], cb);
+    },
+    insertAt: function(path, pos, value, cb) {
+      var elem, key, op, _ref;
+      _ref = traverse(this.snapshot, path), elem = _ref.elem, key = _ref.key;
+      op = {
+        p: path.concat(pos)
+      };
+      if (elem[key].constructor === Array) {
+        op.li = value;
+      } else if (typeof elem[key] === 'string') {
+        op.si = value;
+      }
+      return this.submitOp([op], cb);
+    },
+    moveAt: function(path, from, to, cb) {
+      var op;
+      op = [
+        {
+          p: path.concat(from),
+          lm: to
+        }
+      ];
+      return this.submitOp(op, cb);
+    },
+    addAt: function(path, amount, cb) {
+      var op;
+      op = [
+        {
+          p: path,
+          na: amount
+        }
+      ];
+      return this.submitOp(op, cb);
+    },
+    deleteTextAt: function(path, length, pos, cb) {
+      var elem, key, op, _ref;
+      _ref = traverse(this.snapshot, path), elem = _ref.elem, key = _ref.key;
+      op = [
+        {
+          p: path.concat(pos),
+          sd: elem[key].slice(pos, pos + length)
+        }
+      ];
+      return this.submitOp(op, cb);
+    },
+    addListener: function(path, event, cb) {
+      var l;
+      l = {
+        path: path,
+        event: event,
+        cb: cb
+      };
+      this._listeners.push(l);
+      return l;
+    },
+    removeListener: function(l) {
+      var i;
+      i = this._listeners.indexOf(l);
+      if (i < 0) {
+        return false;
+      }
+      this._listeners.splice(i, 1);
+      return true;
+    },
+    _register: function() {
+      this._listeners = [];
+      this.on('change', function(op) {
+        var c, dummy, i, l, to_remove, xformed, _i, _j, _len, _len1, _ref, _results;
+        _results = [];
+        for (_i = 0, _len = op.length; _i < _len; _i++) {
+          c = op[_i];
+          if (c.na !== void 0 || c.si !== void 0 || c.sd !== void 0) {
+            continue;
+          }
+          to_remove = [];
+          _ref = this._listeners;
+          for (i = _j = 0, _len1 = _ref.length; _j < _len1; i = ++_j) {
+            l = _ref[i];
+            dummy = {
+              p: l.path,
+              na: 0
+            };
+            xformed = this.type.transformComponent([], dummy, c, 'left');
+            if (xformed.length === 0) {
+              to_remove.push(i);
+            } else if (xformed.length === 1) {
+              l.path = xformed[0].p;
+            } else {
+              throw new Error("Bad assumption in json-api: xforming an 'si' op will always result in 0 or 1 components.");
+            }
+          }
+          to_remove.sort(function(a, b) {
+            return b - a;
+          });
+          _results.push((function() {
+            var _k, _len2, _results1;
+            _results1 = [];
+            for (_k = 0, _len2 = to_remove.length; _k < _len2; _k++) {
+              i = to_remove[_k];
+              _results1.push(this._listeners.splice(i, 1));
+            }
+            return _results1;
+          }).call(this));
+        }
+        return _results;
+      });
+      return this.on('remoteop', function(op) {
+        var c, cb, child_path, event, match_path, path, _i, _len, _results;
+        _results = [];
+        for (_i = 0, _len = op.length; _i < _len; _i++) {
+          c = op[_i];
+          match_path = c.na === void 0 ? c.p.slice(0, c.p.length - 1) : c.p;
+          _results.push((function() {
+            var _j, _len1, _ref, _ref1, _results1;
+            _ref = this._listeners;
+            _results1 = [];
+            for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
+              _ref1 = _ref[_j], path = _ref1.path, event = _ref1.event, cb = _ref1.cb;
+              if (pathEquals(path, match_path)) {
+                switch (event) {
+                  case 'insert':
+                    if (c.li !== void 0 && c.ld === void 0) {
+                      _results1.push(cb(c.p[c.p.length - 1], c.li));
+                    } else if (c.oi !== void 0 && c.od === void 0) {
+                      _results1.push(cb(c.p[c.p.length - 1], c.oi));
+                    } else if (c.si !== void 0) {
+                      _results1.push(cb(c.p[c.p.length - 1], c.si));
+                    } else {
+                      _results1.push(void 0);
+                    }
+                    break;
+                  case 'delete':
+                    if (c.li === void 0 && c.ld !== void 0) {
+                      _results1.push(cb(c.p[c.p.length - 1], c.ld));
+                    } else if (c.oi === void 0 && c.od !== void 0) {
+                      _results1.push(cb(c.p[c.p.length - 1], c.od));
+                    } else if (c.sd !== void 0) {
+                      _results1.push(cb(c.p[c.p.length - 1], c.sd));
+                    } else {
+                      _results1.push(void 0);
+                    }
+                    break;
+                  case 'replace':
+                    if (c.li !== void 0 && c.ld !== void 0) {
+                      _results1.push(cb(c.p[c.p.length - 1], c.ld, c.li));
+                    } else if (c.oi !== void 0 && c.od !== void 0) {
+                      _results1.push(cb(c.p[c.p.length - 1], c.od, c.oi));
+                    } else {
+                      _results1.push(void 0);
+                    }
+                    break;
+                  case 'move':
+                    if (c.lm !== void 0) {
+                      _results1.push(cb(c.p[c.p.length - 1], c.lm));
+                    } else {
+                      _results1.push(void 0);
+                    }
+                    break;
+                  case 'add':
+                    if (c.na !== void 0) {
+                      _results1.push(cb(c.na));
+                    } else {
+                      _results1.push(void 0);
+                    }
+                    break;
+                  default:
+                    _results1.push(void 0);
+                }
+              } else if (this.type.canOpAffectOp(path, match_path)) {
+                if (event === 'child op') {
+                  child_path = c.p.slice(path.length);
+                  _results1.push(cb(child_path, c));
+                } else {
+                  _results1.push(void 0);
+                }
+              } else {
+                _results1.push(void 0);
+              }
+            }
+            return _results1;
+          }).call(this));
+        }
+        return _results;
+      });
+    }
+  };
+
+}).call(this);
