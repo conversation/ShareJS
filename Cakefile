@@ -34,23 +34,15 @@ makeUgly = (infile, outfile) ->
   # Uglify compile the JS
   source = cat infile
 
-  {parser, uglify} = require 'uglify-js'
+  UglifyJS = require 'uglify-js'
 
-  opts =
-    defines:
-      WEB: ['name', 'true']
+  result = UglifyJS.minify "var WEB=true; #{source}"
 
-  ast = parser.parse source
-  ast = uglify.ast_lift_variables ast
-  ast = uglify.ast_mangle ast, opts
-  ast = uglify.ast_squeeze ast
-  code = uglify.gen_code ast
+  smaller = Math.round((1 - (result.code.length / source.length)) * 100)
 
-  smaller = Math.round((1 - (code.length / source.length)) * 100)
+  result.code.to outfile
 
-  code.to outfile
-
-  console.log "Uglified: #{smaller}% smaller (#{code.length} bytes} written to #{outfile}"
+  console.log "Uglified: #{smaller}% smaller (#{result.code.length} bytes} written to #{outfile}"
 
 expandNames = (names) -> ("src/#{c}.coffee" for c in names).join ' '
 
