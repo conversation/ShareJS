@@ -37,7 +37,7 @@ compile = (filenames, dest) ->
 
   filenames = expandNames filenames
   exec "coffee -j #{dest}.js -c #{filenames}"
-  prepend.sync "#{dest}.js", "var WEB=true;"
+  # prepend.sync "#{dest}.js", "var WEB=true;"
 
 buildtype = (name) ->
   filenames = ['types/web-prelude', "types/#{name}"]
