@@ -1,6 +1,6 @@
 # The server module...
 
-connect = require 'connect'
+express = require 'express'
 http = require 'http'
 
 Model = require './model'
@@ -38,13 +38,17 @@ create.attach = attach = (server, options, model = createModel(options)) ->
   server.model = model
   server.on 'close', -> model.closeDb()
 
-  server.use options.staticpath, connect.static("#{__dirname}/../../webclient") if options.staticpath != null
+  server.use options.staticpath, express.static("#{__dirname}/../../webclient") if options.staticpath != null
 
   createAgent = require('./useragent') model, options
 
   # The client frontend doesn't get access to the model at all, to make sure security stuff is
   # done properly.
   server.use rest(createAgent, options.rest or {}) if options.rest != null
+
+  console.log options.browserChannel
+  console.log options.sockjs
+  console.log options.websocket
 
   browserChannel.attach(server, createAgent, options.browserChannel or {}) if options.browserChannel != null
 
@@ -60,4 +64,3 @@ create.attach = attach = (server, options, model = createModel(options)) ->
   websocket.attach(server, createAgent, options.websocket or {}) if options.websocket?
 
   server
-

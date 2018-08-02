@@ -18,6 +18,15 @@ wrapSession = (conn) ->
   wrapper
 
 exports.attach = (server, createAgent, options) ->
-  options.prefix or= '/websocket'
-  wss = new WebSocketServer {server: server, path: options.prefix}
-  wss.on 'connection', (conn) -> sessionHandler wrapSession(conn), createAgent
+  options.prefix ||= '/websocket'
+  console.log "Starting WS server: #{options.prefix}"
+  wss = new WebSocketServer {server: server, path: '/websocket'}
+
+  wss.on 'connection', (conn) ->
+    console.log "WS connection received"
+    ws.on 'message', (message) ->
+      console.log "WS message received: #{message}"
+    setInterval ->
+      ws.send("Hello")
+    , 1000
+    #sessionHandler wrapSession(conn), createAgent
