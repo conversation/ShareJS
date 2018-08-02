@@ -14,6 +14,7 @@
 if WEB?
   types = exports.types
   {BCSocket, SockJS, WebSocket} = window
+  foo = 1 + 2
   if BCSocket
     socketImpl = 'channel'
   else
@@ -132,7 +133,7 @@ class Connection
     @socket.close()
 
   # *** Doc management
- 
+
   makeDoc: (name, data, callback) ->
     throw new Error("Doc #{name} already open") if @docs[name]
     doc = new Doc(@, name, data)
