@@ -121,7 +121,7 @@ task 'bump', 'Increase the patch level of the version, -V is optional', (options
   if exec("git status --porcelain").output.match /^ M /m
     throw new Error "git status must be clean"
 
-  for file in ["package.json", "src/index.coffee", "src/client/web-prelude.coffee"]
+  for file in ["package.json", "src/index.js", "src/client/web-prelude.coffee"]
     sed '-i', oldVersion, version, file
 
   invoke "webclient"
