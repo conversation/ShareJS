@@ -12,15 +12,17 @@
 
 
 if WEB?
-  hasBCSocket = window.BCSocket isnt undefined
-  hasSockJS = window.SockJS isnt undefined
-  if hasBCSocket
-    socketImpl = 'channel'
-  else
-    if hasSockJS
-      socketImpl = 'sockjs'
-    else
-      socketImpl = 'websocket'
+  # hasBCSocket = window.BCSocket isnt undefined
+  # hasSockJS = window.SockJS isnt undefined
+  # if hasBCSocket
+  #   socketImpl = 'channel'
+  # else
+  #   if hasSockJS
+  #     socketImpl = 'sockjs'
+  #   else
+  #     socketImpl = 'websocket'
+
+  socketImpl = 'websocket'
 else
   Connection = require('./connection').Connection
 
@@ -89,4 +91,3 @@ exports.open = do ->
 unless WEB?
   exports.Doc = require('./doc').Doc
   exports.Connection = require('./connection').Connection
-
