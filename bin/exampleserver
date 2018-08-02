@@ -21,7 +21,8 @@ server.use(express.static(__dirname + '/../examples'));
 
 var options = {
   db: {type: 'none'},
-  browserChannel: {cors: '*'},
+  browserChannel: null,
+  websocket: true,
   auth: function(client, action) {
     // This auth handler rejects any ops bound for docs starting with 'readonly'.
     if (action.name === 'submit op' && action.docName.match(/^readonly/)) {
