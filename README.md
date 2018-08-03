@@ -1,4 +1,4 @@
-ShareJS [![Build Status](https://secure.travis-ci.org/conversation/ShareJS.png)](http://travis-ci.org/conversation/ShareJS)
+ShareJS [![Build Status](https://secure.travis-ci.org/conversation/ShareJS.png?branch=master)](http://travis-ci.org/conversation/ShareJS)
 =======
 
 **This is a fork of version 0.6.3 of the original [ShareJS](https://github.com/josephg/ShareJS) library.**
