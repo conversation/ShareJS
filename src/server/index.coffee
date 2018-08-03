@@ -31,6 +31,14 @@ create.createModel = createModel = (options) ->
 # defaults will be provided.
 #
 # Set options.rest == null or options.socketio == null to turn off that frontend.
+#
+# This method always returns a http.Server, which should be used to listen
+#
+# eg.
+#   var app = express();
+#   var server = sharejs.server.attach(app);
+#   server.listen(port);
+#
 create.attach = attach = (server, options, model = createModel(options)) ->
   options ?= {}
   options.staticpath ?= '/share'
@@ -60,4 +68,3 @@ create.attach = attach = (server, options, model = createModel(options)) ->
   websocket.attach(server, createAgent, options.websocket or {}) if options.websocket?
 
   server
-
