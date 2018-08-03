@@ -19,5 +19,5 @@ wrapSession = (conn) ->
 
 exports.attach = (server, createAgent, options) ->
   options.prefix or= '/websocket'
-  wss = new WebSocketServer {server: server, path: options.prefix}
+  wss = new WebSocketServer {server: server, path: options.prefix, headers: options.headers}
   wss.on 'connection', (conn) -> sessionHandler wrapSession(conn), createAgent
