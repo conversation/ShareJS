@@ -76,7 +76,7 @@ There are two ways to run a sharejs server:
     var connect = require('connect'),
         sharejs = require('share').server;
 
-    var server = connect(
+    var app = connect(
           connect.logger(),
           connect.static(__dirname + '/my_html_files')
         );
@@ -84,7 +84,7 @@ There are two ways to run a sharejs server:
     var options = {db: {type: 'none'}}; // See docs for options. {type: 'redis'} to enable persistance.
 
     // Attach the sharejs REST and Socket.io interfaces to the server
-    sharejs.attach(server, options);
+    server = sharejs.attach(app, options);
 
     server.listen(8000);
     console.log('Server running at http://127.0.0.1:8000/');
