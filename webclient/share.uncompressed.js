@@ -982,10 +982,8 @@
     function Connection(host, authentication) {
       this.docs = {};
       this.state = 'connecting';
-      if (socketImpl == null) {
-        if (host.match(/^ws:/)) {
-          socketImpl = 'websocket';
-        }
+      if (host.match(/^ws:/)) {
+        socketImpl = 'websocket';
       }
       this.socket = (function() {
         switch (socketImpl) {
