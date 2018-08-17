@@ -53,7 +53,7 @@ module.exports = PgDb = (options) ->
     console.warn 'Creating postgresql database tables'
 
     sql = """
-      CREATE SCHEMA #{options.schema};
+      CREATE SCHEMA IF NOT EXISTS #{options.schema};
 
       CREATE TABLE #{snapshot_table} (
         doc text NOT NULL,
