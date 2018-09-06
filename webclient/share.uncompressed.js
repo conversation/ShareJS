@@ -982,7 +982,7 @@
     function Connection(host, authentication) {
       this.docs = {};
       this.state = 'connecting';
-      if (host.match(/^ws:/)) {
+      if (host.match(/^wss?:/)) {
         socketImpl = 'websocket';
       }
       this.socket = (function() {

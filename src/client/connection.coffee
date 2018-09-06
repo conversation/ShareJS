@@ -41,7 +41,7 @@ class Connection
     # - 'stopped': The connection is closed, and will not reconnect.
     @state = 'connecting'
 
-    if host.match /^ws:/ then socketImpl = 'websocket'
+    if host.match /^wss?:/ then socketImpl = 'websocket'
 
     @socket = switch socketImpl
       when 'channel' then new BCSocket(host, reconnect:true)
