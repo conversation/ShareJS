@@ -2,6 +2,7 @@
 
 connect = require 'connect'
 http = require 'http'
+https = require 'https'
 
 Model = require './model'
 createDb = require './db'
@@ -32,12 +33,20 @@ create.createModel = createModel = (options) ->
 #
 # Set options.rest == null or options.socketio == null to turn off that frontend.
 #
-# This method always returns a http.Server, which should be used to listen
+# This method always returns a http or https Server, which should be used to listen
 #
 # eg.
 #   var app = express();
 #   var server = sharejs.server.attach(app);
 #   server.listen(port);
+#
+# or, https:
+#   var credentials = {
+#     key: fs.readFileSync('server.key'),
+#     cert: fs.readFileSync('server.cert')
+#   };
+#
+#   var server = sharejs.server.attach(app, { https: credentials });
 #
 create.attach = attach = (server, options, model = createModel(options)) ->
   options ?= {}
@@ -56,7 +65,9 @@ create.attach = attach = (server, options, model = createModel(options)) ->
 
   browserChannel.attach(server, createAgent, options.browserChannel or {}) if options.browserChannel != null
 
-  if !(server instanceof http.Server)
+  if options.https
+    server = https.createServer options.https, server
+  else
     server = http.createServer server
 
   # this is required by sockjs since it only works with http server, not with
