@@ -989,7 +989,8 @@
         switch (socketImpl) {
           case 'channel':
             return new BCSocket(host, {
-              reconnect: true
+              reconnect: true,
+              crossDomainXhr: true
             });
           case 'sockjs':
             return new ReconnectingWebSocket(host, SockJS);
@@ -997,7 +998,8 @@
             return new ReconnectingWebSocket(host);
           default:
             return new BCSocket(host, {
-              reconnect: true
+              reconnect: true,
+              crossDomainXhr: true
             });
         }
       })();

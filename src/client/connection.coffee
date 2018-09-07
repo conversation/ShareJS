@@ -44,10 +44,10 @@ class Connection
     if host.match /^wss?:/ then socketImpl = 'websocket'
 
     @socket = switch socketImpl
-      when 'channel' then new BCSocket(host, reconnect:true)
+      when 'channel' then new BCSocket(host, reconnect: true, crossDomainXhr: true)
       when 'sockjs' then new ReconnectingWebSocket(host, SockJS)
       when 'websocket' then new ReconnectingWebSocket(host)
-      else new BCSocket(host, reconnect:true)
+      else new BCSocket(host, reconnect: true, crossDomainXhr: true)
 
     @socket.onmessage = (msg) =>
       msg = JSON.parse(msg.data) if socketImpl in ['sockjs', 'websocket']
