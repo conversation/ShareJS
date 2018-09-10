@@ -4,6 +4,12 @@ WebSocketServer = require('ws').Server
 
 sessionHandler = require('./session').handler
 
+safeJsonParse = (data) ->
+  try
+    JSON.parse data
+  catch e
+    JSON.parse JSON.stringify data
+
 wrapSession = (conn) ->
   wrapper = new EventEmitter
   wrapper.abort = -> conn.close()
@@ -11,7 +17,7 @@ wrapSession = (conn) ->
   wrapper.send = (response) ->
     conn.send JSON.stringify response if wrapper.ready()
   wrapper.ready = -> conn.readyState is 1
-  conn.on 'message', (data) -> wrapper.emit 'message', JSON.parse data
+  conn.on 'message', (data) -> wrapper.emit 'message', safeJsonParse data
   wrapper.headers = conn.upgradeReq.headers
   # TODO - I don't think this is the right way to get the address
   wrapper.address = conn._socket.server._connectionKey?
