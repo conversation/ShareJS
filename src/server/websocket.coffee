@@ -11,7 +11,19 @@ wrapSession = (conn) ->
   wrapper.send = (response) ->
     conn.send JSON.stringify response if wrapper.ready()
   wrapper.ready = -> conn.readyState is 1
-  conn.on 'message', (data) -> wrapper.emit 'message', JSON.parse data
+  conn.on 'message', (data) ->
+    msg = JSON.parse data
+
+    # 'heartbeat' is a message from the client to see if
+    # the server is still listening.
+    #
+    # if the client does not hear back in a timely manner
+    # it should terminate the connection.
+    if msg == 'heartbeat'
+      wrapper.send { heartbeat: new Date() }
+    else
+      wrapper.emit 'message', msg
+
   wrapper.headers = conn.upgradeReq.headers
   # TODO - I don't think this is the right way to get the address
   wrapper.address = conn._socket.server._connectionKey?
