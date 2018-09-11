@@ -22,6 +22,7 @@ wrapSession = (conn) ->
 # if they don't respond to a ping, terminate the connection
 setPeriodicHeartbeatCheck = (wss) ->
   setInterval ->
+    console.log("pinging clients")
     for ws in wss.clients
       if ws.isAlive
         ws.isAlive = false
@@ -38,6 +39,8 @@ heartbeat = ->
 exports.attach = (server, createAgent, options) ->
   options.prefix or= '/websocket'
   wss = new WebSocketServer {server: server, path: options.prefix, headers: options.headers}
+
+  console.log("attached websocket server")
 
   wss.on 'connection', (ws) ->
     ws.isAlive = true
