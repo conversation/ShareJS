@@ -17,7 +17,29 @@ wrapSession = (conn) ->
   wrapper.address = conn._socket.server._connectionKey?
   wrapper
 
+# checks heartbeat of clients every 30 seconds
+#
+# if they don't respond to a ping, terminate the connection
+setPeriodicHeartbeatCheck = (wss) ->
+  setInterval ->
+    for ws in wss.clients
+      if ws.isAlive
+        ws.isAlive = false
+        ws.ping()
+      else
+        ws.terminate()
+  , 30000
+
+heartbeat = ->
+  @isAlive = true
+
 exports.attach = (server, createAgent, options) ->
   options.prefix or= '/websocket'
   wss = new WebSocketServer {server: server, path: options.prefix, headers: options.headers}
-  wss.on 'connection', (conn) -> sessionHandler wrapSession(conn), createAgent
+
+  wss.on 'connection', (ws) ->
+    ws.isAlive = true
+    ws.on('pong', heartbeat);
+    sessionHandler wrapSession(ws), createAgent
+
+  setPeriodicHeartbeatCheck(wss)
