@@ -25,12 +25,14 @@ setPeriodicHeartbeatCheck = (wss) ->
     for ws in wss.clients
       if ws.isAlive
         ws.isAlive = false
+        console.log("sending ping!")
         ws.ping()
       else
         ws.terminate()
   , 30000
 
 heartbeat = ->
+  console.log("got pong!")
   @isAlive = true
 
 exports.attach = (server, createAgent, options) ->
