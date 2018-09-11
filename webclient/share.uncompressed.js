@@ -829,6 +829,10 @@
    */
 
   ReconnectingWebSocket = (function() {
+    var HEARTBEAT_INTERVAL;
+
+    HEARTBEAT_INTERVAL = 10000;
+
     function ReconnectingWebSocket(url, protocols, Socket) {
       var connect, timedOut;
       if ((protocols != null) && typeof protocols === 'function') {
@@ -866,12 +870,14 @@
             if (_this.debug) {
               console.debug("ReconnectingWebSocket", "onopen", _this.url);
             }
+            _this._periodicHeartbeatCheck();
             _this.readyState = Socket.OPEN;
             reconnectAttempt = false;
             return _this.onopen(event);
           };
           _this.ws.onclose = function(event) {
             clearTimeout(timeout);
+            clearInterval(_this.checkInterval);
             _this.ws = null;
             if (_this.forcedClose) {
               _this.readyState = Socket.CLOSED;
@@ -891,10 +897,16 @@
             }
           };
           _this.ws.onmessage = function(event) {
+            var data;
+            data = JSON.parse(event.data);
             if (_this.debug) {
               console.debug("ReconnectingWebSocket", "onmessage", _this.url, event.data);
             }
-            return _this.onmessage(event);
+            if (data.heartbeat) {
+              return _this.heartbeat = data.heartbeat;
+            } else {
+              return _this.onmessage(event);
+            }
           };
           return _this.ws.onerror = function(event) {
             if (_this.debug) {
@@ -952,6 +964,20 @@
       if (this.ws) {
         return this.ws.close();
       }
+    };
+
+    ReconnectingWebSocket.prototype._periodicHeartbeatCheck = function() {
+      this.heartbeat = true;
+      return this.checkInterval = setInterval((function(_this) {
+        return function() {
+          if (_this.heartbeat) {
+            _this.heartbeat = null;
+            return _this.send(JSON.stringify("heartbeat"));
+          } else {
+            return _this.refresh();
+          }
+        };
+      })(this), HEARTBEAT_INTERVAL);
     };
 
     return ReconnectingWebSocket;

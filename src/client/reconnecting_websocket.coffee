@@ -49,6 +49,8 @@ Contributors:
 - Wout Mertens
 ###
 class ReconnectingWebSocket
+  HEARTBEAT_INTERVAL = 10000 # 10 seconds
+
   constructor: (url, protocols, Socket) ->
     if protocols? and typeof protocols is 'function'
       Socket = protocols
@@ -83,12 +85,14 @@ class ReconnectingWebSocket
       @ws.onopen = (event) =>
         clearTimeout timeout
         console.debug "ReconnectingWebSocket", "onopen", @url  if @debug
+        @_periodicHeartbeatCheck()
         @readyState = Socket.OPEN
         reconnectAttempt = false
         @onopen event
 
       @ws.onclose = (event) =>
         clearTimeout timeout
+        clearInterval @checkInterval
         @ws = null
         if @forcedClose
           @readyState = Socket.CLOSED
@@ -102,8 +106,15 @@ class ReconnectingWebSocket
           setTimeout (-> connect true ), @reconnectInterval
 
       @ws.onmessage = (event) =>
+        data = JSON.parse event.data
+
         console.debug "ReconnectingWebSocket", "onmessage", @url, event.data  if @debug
-        @onmessage event
+        # intercept the message if it's a heartbeat
+        if data.heartbeat
+          @heartbeat = data.heartbeat
+        else
+          @onmessage event
+
 
       @ws.onerror = (event) =>
         console.debug "ReconnectingWebSocket", "onerror", @url, event  if @debug
@@ -139,3 +150,17 @@ class ReconnectingWebSocket
   ###
   refresh: ->
     @ws.close()  if @ws
+
+  # This checks periodically to see if the server is still responding.
+  #
+  # If the client does not receive a response within the interval, it
+  # will refresh the connection.
+  _periodicHeartbeatCheck: ->
+    @heartbeat = true
+    @checkInterval = setInterval =>
+      if @heartbeat
+        @heartbeat = null
+        @send JSON.stringify "heartbeat"
+      else
+        @refresh()
+    , HEARTBEAT_INTERVAL
