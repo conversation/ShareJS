@@ -105,7 +105,7 @@ matchDocNameWithVersions = (urlString, base) ->
 #   10
 #   > matchVersion 'http://example.com/'
 #   10
-#   > matchDocName 'hello'
+#   > matchVersion 'hello'
 #   undefined
 matchVersion = (urlString) ->
   urlParts = url.parse urlString
