@@ -1166,3 +1166,27 @@ exports['integration'] = testCase
           test.strictEqual v, 1
           test.done()
 
+  'getSnapshotVersion for a doc returns a snapshot for that version': (test) ->
+    name = newDocName()
+
+    @model.create name, types.text, (error) =>
+      test.equal error, null
+
+      applyOps @model, name, 0, [
+        [{ p: 0, i: 'Hi' }],
+        [{ p: 2, i: ' mum' }],
+        [{ p: 1, d: 'i' }],
+        [{ p: 1, i: 'ello' }],
+      ], (error, data) =>
+        test.equal error, null
+
+        @model.getSnapshotVersion name, 1, (error, data) =>
+          test.deepEqual error, null
+          test.deepEqual data.snapshot, "Hi mum"
+          test.deepEqual data.v, 1
+
+          @model.getSnapshotVersion name, 3, (error, data) ->
+            test.deepEqual error, null
+            test.deepEqual data.snapshot, "Hello mum"
+            test.deepEqual data.v, 3
+            test.done()
