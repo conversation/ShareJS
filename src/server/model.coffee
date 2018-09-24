@@ -530,42 +530,31 @@ module.exports = Model = (db, options) ->
   # getSnapshotVersion(docName, version, callback)
   # Callback is called with (error, {v: <version>, type: <type>, snapshot: <snapshot>, meta: <meta>})
   @getSnapshotVersion = (docName, v, callback) ->
-    db.getSnapshotLessThanOrEqualTo docName, v, (error, latestDoc) ->
-      if error
-        callback error, null
-        return
+    load docName, (error, doc) ->
+      return callback? error if error
 
-      type = types[latestDoc.type]
-      unless type
-        console.warn "Type '#{data.type}' missing"
-        callback "Type not found", null
-        return
+      # The the doc type of the latest snapshot.
+      type = doc.type
 
-      requiredOpCount = v - latestDoc.v
+      # Get all ops from start to end, where end is the requested
+      # version. End is not inclusive, so we want v + 1 to actually
+      # get the requested version.
+      getOps docName, 0, v + 1, (error, ops) ->
+        return callback? error if error
 
-      if requiredOpCount == 0
-        doc = {type: type, snapshot: latestDoc.snapshot, v: latestDoc.v, meta: latestDoc.meta}
-        callback null, doc
-        return
+        docTemplate = {v: 0, type: type, snapshot: "", meta: null}
+        results = []
 
-      getOps docName, latestDoc.v, v, (error, ops) ->
-        if error
-          callback error, null
-          return
+        try
+          for op in ops
+            docTemplate.v = op.v
+            docTemplate.snapshot = type.apply(docTemplate.snapshot, op.op)
+            docTemplate.meta = op.meta
 
-        if ops.length != requiredOpCount
-          callback new Error("operations missing in DB"), null
-          return
-
-        doc = {snapshot: latestDoc.snapshot}
-
-        doc.type = type
-        for op in ops
-          doc.v = op.v+1
-          doc.snapshot = doc.type.apply(doc.snapshot, op.op)
-          doc.meta = op.meta
-
-        callback null, doc
+          callback? null, docTemplate
+        catch e
+          console.error "Op data invalid for #{docName}: #{e.stack}"
+          callback? 'Op data invalid'
 
   # Gets the latest version # of the document.
   # getVersion(docName, callback)
