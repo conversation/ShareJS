@@ -534,10 +534,17 @@ module.exports = Model = (db, options) ->
       if error
         callback error, null
         return
+
+      type = types[latestDoc.type]
+      unless type
+        console.warn "Type '#{data.type}' missing"
+        callback "Type not found", null
+        return
+
       requiredOpCount = v - latestDoc.v
 
       if requiredOpCount == 0
-        doc = {type: latestDoc.type, snapshot: latestDoc.snapshot, v: latestDoc.v, meta: latestDoc.meta}
+        doc = {type: type, snapshot: latestDoc.snapshot, v: latestDoc.v, meta: latestDoc.meta}
         callback null, doc
         return
 
@@ -551,11 +558,6 @@ module.exports = Model = (db, options) ->
           return
 
         doc = {snapshot: latestDoc.snapshot}
-        type = types[latestDoc.type]
-        unless type
-          console.warn "Type '#{data.type}' missing"
-          callback "Type not found", null
-          return
 
         doc.type = type
         for op in ops
