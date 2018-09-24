@@ -543,7 +543,6 @@ module.exports = Model = (db, options) ->
         return callback? error if error
 
         docTemplate = {v: 0, type: type, snapshot: "", meta: null}
-        results = []
 
         try
           for op in ops
