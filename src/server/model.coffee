@@ -523,6 +523,38 @@ module.exports = Model = (db, options) ->
           console.error "Op data invalid for #{docName}: #{e.stack}"
           callback? 'Op data invalid'
 
+  # Gets the snapshot data for the specified document at the requested version.
+  # This is much less efficient than using getSnapshot() to fetch the latest version
+  # of a document, so only use it when you need a specific, non-latest version
+  #
+  # getSnapshotVersion(docName, version, callback)
+  # Callback is called with (error, {v: <version>, type: <type>, snapshot: <snapshot>, meta: <meta>})
+  @getSnapshotVersion = (docName, v, callback) ->
+    load docName, (error, doc) ->
+      return callback? error if error
+
+      # The the doc type of the latest snapshot.
+      type = doc.type
+
+      # Get all ops from start to end, where end is the requested
+      # version. End is not inclusive, so we want v + 1 to actually
+      # get the requested version.
+      getOps docName, 0, v + 1, (error, ops) ->
+        return callback? error if error
+
+        docTemplate = {v: 0, type: type, snapshot: "", meta: null}
+
+        try
+          for op in ops
+            docTemplate.v = op.v
+            docTemplate.snapshot = type.apply(docTemplate.snapshot, op.op)
+            docTemplate.meta = op.meta
+
+          callback? null, docTemplate
+        catch e
+          console.error "Op data invalid for #{docName}: #{e.stack}"
+          callback? 'Op data invalid'
+
   # Gets the latest version # of the document.
   # getVersion(docName, callback)
   # callback is called with (error, version).
