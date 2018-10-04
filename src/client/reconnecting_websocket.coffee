@@ -60,7 +60,11 @@ class ReconnectingWebSocket
 
     # These can be altered by calling code.
     @debug = @debugAll
+
+    # interval between reconnection attempts
     @reconnectInterval = 1000
+
+    # this is the time it takes to "notice" a disconnection
     @timeoutInterval = 2000
 
     @forcedClose = false
