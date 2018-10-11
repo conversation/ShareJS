@@ -65,7 +65,7 @@ class ReconnectingWebSocket
     @reconnectInterval = 4000
 
     # this is the time it takes to "notice" a disconnection
-    @timeoutInterval = 2000
+    @timeoutInterval = 10000
 
     @forcedClose = false
 
