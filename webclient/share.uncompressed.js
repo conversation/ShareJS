@@ -842,8 +842,8 @@
         Socket = WebSocket;
       }
       this.debug = this.debugAll;
-      this.reconnectInterval = 1000;
-      this.timeoutInterval = 2000;
+      this.reconnectInterval = 4000;
+      this.timeoutInterval = 10000;
       this.forcedClose = false;
       this.url = url;
       this.protocols = protocols;
