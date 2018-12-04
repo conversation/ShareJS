@@ -11,6 +11,7 @@ wrapSession = (conn) ->
   wrapper.send = (response) ->
     conn.send JSON.stringify response if wrapper.ready()
   wrapper.ready = -> conn.readyState is 1
+  conn.on 'close', -> wrapper.emit 'close'
   conn.on 'message', (data) ->
     msg = JSON.parse data
 
