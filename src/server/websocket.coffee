@@ -4,6 +4,8 @@ WebSocketServer = require('ws').Server
 
 sessionHandler = require('./session').handler
 
+STATISTICS_INTERVAL = 10000 # 10 seconds
+
 wrapSession = (conn) ->
   wrapper = new EventEmitter
   wrapper.abort = -> conn.close()
@@ -34,3 +36,9 @@ exports.attach = (server, createAgent, options) ->
   options.prefix or= '/websocket'
   wss = new WebSocketServer {server: server, path: options.prefix, headers: options.headers}
   wss.on 'connection', (conn) -> sessionHandler wrapSession(conn), createAgent
+
+  if !!options.trackStats
+    setInterval ->
+      options.trackStats
+        activeWebsocketConnections: wss.clients.length
+    , STATISTICS_INTERVAL
