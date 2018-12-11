@@ -829,94 +829,41 @@
    */
 
   ReconnectingWebSocket = (function() {
-    var HEARTBEAT_INTERVAL;
+    var HEALTHCHECK_INTERVAL, HEARTBEAT_NOT_REQUESTED, HEARTBEAT_RECEIVED, HEARTBEAT_REQUESTED;
 
-    HEARTBEAT_INTERVAL = 10000;
+    HEALTHCHECK_INTERVAL = 10000;
 
-    function ReconnectingWebSocket(url, protocols, Socket) {
-      var connect, timedOut;
-      if ((protocols != null) && typeof protocols === 'function') {
-        Socket = protocols;
-        protocols = void 0;
-      } else if (typeof Socket !== 'function') {
-        Socket = WebSocket;
-      }
+    HEARTBEAT_NOT_REQUESTED = 1;
+
+    HEARTBEAT_REQUESTED = 2;
+
+    HEARTBEAT_RECEIVED = 3;
+
+
+    /*
+    Setting this to true is the equivalent of setting all instances of ReconnectingWebSocket.debug to true.
+     */
+
+    ReconnectingWebSocket.prototype.debugAll = false;
+
+    function ReconnectingWebSocket(url) {
+      this._disconnect = __bind(this._disconnect, this);
+      this._removeEventListeners = __bind(this._removeEventListeners, this);
+      this._handleWebsocketError = __bind(this._handleWebsocketError, this);
+      this._handleWebsocketMessage = __bind(this._handleWebsocketMessage, this);
+      this._handleWebsocketClose = __bind(this._handleWebsocketClose, this);
+      this._handleWebsocketOpen = __bind(this._handleWebsocketOpen, this);
+      this._connect = __bind(this._connect, this);
+      this._periodicHealthCheck = __bind(this._periodicHealthCheck, this);
+      this._checkHeartbeat = __bind(this._checkHeartbeat, this);
+      this._reconnect = __bind(this._reconnect, this);
       this.debug = this.debugAll;
-      this.reconnectInterval = 4000;
-      this.timeoutInterval = 10000;
       this.forcedClose = false;
       this.url = url;
-      this.protocols = protocols;
-      this.readyState = Socket.CONNECTING;
+      this.readyState = WebSocket.CONNECTING;
       this.URL = url;
-      timedOut = false;
-      connect = (function(_this) {
-        return function(reconnectAttempt) {
-          var timeout;
-          _this.ws = new Socket(_this.url);
-          if (_this.debug) {
-            console.debug("ReconnectingWebSocket", "attempt-connect", _this.url);
-          }
-          timeout = setTimeout(function() {
-            if (_this.debug) {
-              console.debug("ReconnectingWebSocket", "connection-timeout", _this.url);
-            }
-            timedOut = true;
-            _this.ws.close();
-            return timedOut = false;
-          }, _this.timeoutInterval);
-          _this.ws.onopen = function(event) {
-            clearTimeout(timeout);
-            if (_this.debug) {
-              console.debug("ReconnectingWebSocket", "onopen", _this.url);
-            }
-            _this._periodicHeartbeatCheck();
-            _this.readyState = Socket.OPEN;
-            reconnectAttempt = false;
-            return _this.onopen(event);
-          };
-          _this.ws.onclose = function(event) {
-            clearTimeout(timeout);
-            clearInterval(_this.checkInterval);
-            _this.ws = null;
-            if (_this.forcedClose) {
-              _this.readyState = Socket.CLOSED;
-              return _this.onclose(event);
-            } else {
-              _this.readyState = Socket.CONNECTING;
-              _this.onconnecting(event);
-              if (!reconnectAttempt && !timedOut) {
-                if (_this.debug) {
-                  console.debug("ReconnectingWebSocket", "onclose", _this.url);
-                }
-                _this.onclose(event);
-              }
-              return setTimeout((function() {
-                return connect(true);
-              }), _this.reconnectInterval);
-            }
-          };
-          _this.ws.onmessage = function(event) {
-            var data;
-            data = JSON.parse(event.data);
-            if (_this.debug) {
-              console.debug("ReconnectingWebSocket", "onmessage", _this.url, event.data);
-            }
-            if (data.heartbeat) {
-              return _this.heartbeat = data.heartbeat;
-            } else {
-              return _this.onmessage(event);
-            }
-          };
-          return _this.ws.onerror = function(event) {
-            if (_this.debug) {
-              console.debug("ReconnectingWebSocket", "onerror", _this.url, event);
-            }
-            return _this.onerror(event);
-          };
-        };
-      })(this);
-      connect(this.url);
+      this.healthCheckInterval = setInterval(this._periodicHealthCheck, HEALTHCHECK_INTERVAL);
+      this._connect();
     }
 
     ReconnectingWebSocket.prototype.onopen = function(event) {};
@@ -949,35 +896,136 @@
 
 
     /*
-    Setting this to true is the equivalent of setting all instances of ReconnectingWebSocket.debug to true.
-     */
-
-    ReconnectingWebSocket.prototype.debugAll = false;
-
-
-    /*
     Additional public API method to refresh the connection if still open (close, re-open).
     For example, if the app suspects bad data / missed heart beats, it can try to refresh.
      */
 
     ReconnectingWebSocket.prototype.refresh = function() {
-      if (this.ws) {
-        return this.ws.close();
+      if (this.debug) {
+        console.debug("ReconnectingWebSocket", "refresh");
+      }
+      return this._reconnect();
+    };
+
+    ReconnectingWebSocket.prototype._reconnect = function() {
+      if (this.debug) {
+        console.debug("ReconnectingWebSocket", "reconnect");
+      }
+      if (!this.ws || this.ws.readyState === WebSocket.CLOSED) {
+        return this._connect();
+      } else {
+        this._disconnect();
+        return this._connect();
       }
     };
 
-    ReconnectingWebSocket.prototype._periodicHeartbeatCheck = function() {
-      this.heartbeat = true;
-      return this.checkInterval = setInterval((function(_this) {
-        return function() {
-          if (_this.heartbeat) {
-            _this.heartbeat = null;
-            return _this.send(JSON.stringify("heartbeat"));
-          } else {
-            return _this.refresh();
-          }
-        };
-      })(this), HEARTBEAT_INTERVAL);
+    ReconnectingWebSocket.prototype._checkHeartbeat = function() {
+      if (this.heartbeatResponse === HEARTBEAT_REQUESTED) {
+        if (this.debug) {
+          console.debug("ReconnectingWebSocket", "no-heartbeat");
+        }
+        return this._reconnect();
+      } else {
+        this.heartbeatResponse = HEARTBEAT_REQUESTED;
+        if (this.debug) {
+          console.debug("ReconnectingWebSocket", "send-heartbeat");
+        }
+        return this.send(JSON.stringify("heartbeat"));
+      }
+    };
+
+    ReconnectingWebSocket.prototype._periodicHealthCheck = function() {
+      if (this.debug) {
+        console.debug("ReconnectingWebSocket", "healthcheck");
+      }
+      switch (this.readyState) {
+        case WebSocket.CLOSED:
+          return this._reconnect();
+        case WebSocket.CONNECTING:
+          return this._reconnect();
+        case WebSocket.OPEN:
+          return this._checkHeartbeat();
+      }
+    };
+
+    ReconnectingWebSocket.prototype._connect = function() {
+      this.ws = new WebSocket(this.url);
+      this.readyState = WebSocket.CONNECTING;
+      if (this.debug) {
+        console.debug("ReconnectingWebSocket", "attempt-connect", this.url);
+      }
+      this.ws.addEventListener("open", this._handleWebsocketOpen);
+      this.ws.addEventListener("close", this._handleWebsocketClose);
+      this.ws.addEventListener("message", this._handleWebsocketMessage);
+      return this.ws.addEventListener("error", this._handleWebsocketError);
+    };
+
+    ReconnectingWebSocket.prototype._handleWebsocketOpen = function(event) {
+      if (this.debug) {
+        console.debug("ReconnectingWebSocket", "onopen", this.url);
+      }
+      this.readyState = WebSocket.OPEN;
+      this.heartbeatResponse = HEARTBEAT_NOT_REQUESTED;
+      return this.onopen(event);
+    };
+
+    ReconnectingWebSocket.prototype._handleWebsocketClose = function(event) {
+      this.ws = null;
+      this.readyState = WebSocket.CLOSED;
+      this.onclose(event);
+      if (this.forcedClose) {
+        return clearInterval(this.healthCheckInterval);
+      }
+    };
+
+    ReconnectingWebSocket.prototype._handleWebsocketMessage = function(event) {
+      var data;
+      data = JSON.parse(event.data);
+      if (this.debug) {
+        console.debug("ReconnectingWebSocket", "onmessage", this.url, event.data);
+      }
+      if (data.heartbeat) {
+        if (this.debug) {
+          console.debug("ReconnectingWebSocket", "heartbeat-received", data.heartbeat);
+        }
+        return this.heartbeatResponse = HEARTBEAT_RECEIVED;
+      } else {
+        return this.onmessage(event);
+      }
+    };
+
+    ReconnectingWebSocket.prototype._handleWebsocketError = function(event) {
+      if (this.debug) {
+        console.debug("ReconnectingWebSocket", "onerror", this.url, event);
+      }
+      return this.onerror(event);
+    };
+
+    ReconnectingWebSocket.prototype._removeEventListeners = function() {
+      if (this.debug) {
+        console.debug("ReconnectingWebSocket", "remove-event-listeners");
+      }
+      if (this.ws) {
+        this.ws.removeEventListener("open", this._handleWebsocketOpen);
+        this.ws.removeEventListener("close", this._handleWebsocketClose);
+        this.ws.removeEventListener("message", this._handleWebsocketMessage);
+        return this.ws.removeEventListener("error", this._handleWebsocketError);
+      }
+    };
+
+    ReconnectingWebSocket.prototype._disconnect = function() {
+      if (this.debug) {
+        console.debug("ReconnectingWebSocket", "disconnect");
+      }
+      if (this.ws) {
+        this._removeEventListeners();
+        this.ws.close();
+        this.readyState = WebSocket.CLOSED;
+        return this.onclose({
+          target: this,
+          type: "disconnect"
+        });
+      }
     };
 
     return ReconnectingWebSocket;
