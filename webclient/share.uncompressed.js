@@ -879,7 +879,7 @@
     ReconnectingWebSocket.prototype.send = function(data) {
       if (this.ws) {
         if (this.debug) {
-          console.debug("ReconnectingWebSocket", "send", this.url, data);
+          console.log("ReconnectingWebSocket", "send", this.url, data);
         }
         return this.ws.send(data);
       } else {
@@ -902,14 +902,14 @@
 
     ReconnectingWebSocket.prototype.refresh = function() {
       if (this.debug) {
-        console.debug("ReconnectingWebSocket", "refresh");
+        console.log("ReconnectingWebSocket", "refresh");
       }
       return this._reconnect();
     };
 
     ReconnectingWebSocket.prototype._reconnect = function() {
       if (this.debug) {
-        console.debug("ReconnectingWebSocket", "reconnect");
+        console.log("ReconnectingWebSocket", "reconnect");
       }
       if (!this.ws || this.ws.readyState === WebSocket.CLOSED) {
         return this._connect();
@@ -922,13 +922,13 @@
     ReconnectingWebSocket.prototype._checkHeartbeat = function() {
       if (this.heartbeatResponse === HEARTBEAT_REQUESTED) {
         if (this.debug) {
-          console.debug("ReconnectingWebSocket", "no-heartbeat");
+          console.log("ReconnectingWebSocket", "no-heartbeat");
         }
         return this._reconnect();
       } else {
         this.heartbeatResponse = HEARTBEAT_REQUESTED;
         if (this.debug) {
-          console.debug("ReconnectingWebSocket", "send-heartbeat");
+          console.log("ReconnectingWebSocket", "send-heartbeat");
         }
         return this.send(JSON.stringify("heartbeat"));
       }
@@ -936,7 +936,7 @@
 
     ReconnectingWebSocket.prototype._periodicHealthCheck = function() {
       if (this.debug) {
-        console.debug("ReconnectingWebSocket", "healthcheck");
+        console.log("ReconnectingWebSocket", "healthcheck");
       }
       switch (this.readyState) {
         case WebSocket.CLOSED:
@@ -952,7 +952,7 @@
       this.ws = new WebSocket(this.url);
       this.readyState = WebSocket.CONNECTING;
       if (this.debug) {
-        console.debug("ReconnectingWebSocket", "attempt-connect", this.url);
+        console.log("ReconnectingWebSocket", "attempt-connect", this.url);
       }
       this.ws.addEventListener("open", this._handleWebsocketOpen);
       this.ws.addEventListener("close", this._handleWebsocketClose);
@@ -962,7 +962,7 @@
 
     ReconnectingWebSocket.prototype._handleWebsocketOpen = function(event) {
       if (this.debug) {
-        console.debug("ReconnectingWebSocket", "onopen", this.url);
+        console.log("ReconnectingWebSocket", "onopen", this.url);
       }
       this.readyState = WebSocket.OPEN;
       this.heartbeatResponse = HEARTBEAT_NOT_REQUESTED;
@@ -982,11 +982,11 @@
       var data;
       data = JSON.parse(event.data);
       if (this.debug) {
-        console.debug("ReconnectingWebSocket", "onmessage", this.url, event.data);
+        console.log("ReconnectingWebSocket", "onmessage", this.url, event.data);
       }
       if (data.heartbeat) {
         if (this.debug) {
-          console.debug("ReconnectingWebSocket", "heartbeat-received", data.heartbeat);
+          console.log("ReconnectingWebSocket", "heartbeat-received", data.heartbeat);
         }
         return this.heartbeatResponse = HEARTBEAT_RECEIVED;
       } else {
@@ -996,14 +996,14 @@
 
     ReconnectingWebSocket.prototype._handleWebsocketError = function(event) {
       if (this.debug) {
-        console.debug("ReconnectingWebSocket", "onerror", this.url, event);
+        console.log("ReconnectingWebSocket", "onerror", this.url, event);
       }
       return this.onerror(event);
     };
 
     ReconnectingWebSocket.prototype._removeEventListeners = function() {
       if (this.debug) {
-        console.debug("ReconnectingWebSocket", "remove-event-listeners");
+        console.log("ReconnectingWebSocket", "remove-event-listeners");
       }
       if (this.ws) {
         this.ws.removeEventListener("open", this._handleWebsocketOpen);
@@ -1015,7 +1015,7 @@
 
     ReconnectingWebSocket.prototype._disconnect = function() {
       if (this.debug) {
-        console.debug("ReconnectingWebSocket", "disconnect");
+        console.log("ReconnectingWebSocket", "disconnect");
       }
       if (this.ws) {
         this._removeEventListeners();

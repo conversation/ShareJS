@@ -98,7 +98,7 @@ class ReconnectingWebSocket
 
   send: (data) ->
     if @ws
-      console.debug "ReconnectingWebSocket", "send", @url, data  if @debug
+      console.log "ReconnectingWebSocket", "send", @url, data  if @debug
       @ws.send data
     else
       throw "INVALID_STATE_ERR : Pausing to reconnect websocket"
@@ -113,7 +113,7 @@ class ReconnectingWebSocket
   For example, if the app suspects bad data / missed heart beats, it can try to refresh.
   ###
   refresh: ->
-    console.debug "ReconnectingWebSocket", "refresh" if @debug
+    console.log "ReconnectingWebSocket", "refresh" if @debug
     @_reconnect()
 
   # Closes the WebSocket connection or connection attempt and tries again.
@@ -121,7 +121,7 @@ class ReconnectingWebSocket
   # Useful if stuck in a state unexpectedly, or if no heartbeat response
   # has been received.
   _reconnect: =>
-    console.debug "ReconnectingWebSocket", "reconnect"  if @debug
+    console.log "ReconnectingWebSocket", "reconnect"  if @debug
     if !@ws || @ws.readyState == WebSocket.CLOSED
       @_connect()
     else
@@ -134,15 +134,15 @@ class ReconnectingWebSocket
   # will refresh the connection.
   _checkHeartbeat: =>
     if @heartbeatResponse == HEARTBEAT_REQUESTED
-      console.debug "ReconnectingWebSocket", "no-heartbeat"  if @debug
+      console.log "ReconnectingWebSocket", "no-heartbeat"  if @debug
       @_reconnect()
     else
       @heartbeatResponse = HEARTBEAT_REQUESTED
-      console.debug "ReconnectingWebSocket", "send-heartbeat"  if @debug
+      console.log "ReconnectingWebSocket", "send-heartbeat"  if @debug
       @send JSON.stringify "heartbeat"
 
   _periodicHealthCheck: =>
-    console.debug "ReconnectingWebSocket", "healthcheck"  if @debug
+    console.log "ReconnectingWebSocket", "healthcheck"  if @debug
     switch @readyState
       when WebSocket.CLOSED then @_reconnect()
       when WebSocket.CONNECTING then @_reconnect()
@@ -151,14 +151,14 @@ class ReconnectingWebSocket
   _connect: =>
     @ws = new WebSocket(@url)
     @readyState = WebSocket.CONNECTING
-    console.debug "ReconnectingWebSocket", "attempt-connect", @url  if @debug
+    console.log "ReconnectingWebSocket", "attempt-connect", @url  if @debug
     @ws.addEventListener "open", @_handleWebsocketOpen
     @ws.addEventListener "close", @_handleWebsocketClose
     @ws.addEventListener "message", @_handleWebsocketMessage
     @ws.addEventListener "error", @_handleWebsocketError
 
   _handleWebsocketOpen: (event) =>
-    console.debug "ReconnectingWebSocket", "onopen", @url  if @debug
+    console.log "ReconnectingWebSocket", "onopen", @url  if @debug
     @readyState = WebSocket.OPEN
     @heartbeatResponse = HEARTBEAT_NOT_REQUESTED
     @onopen event
@@ -176,20 +176,20 @@ class ReconnectingWebSocket
   _handleWebsocketMessage: (event) =>
     data = JSON.parse event.data
 
-    console.debug "ReconnectingWebSocket", "onmessage", @url, event.data  if @debug
+    console.log "ReconnectingWebSocket", "onmessage", @url, event.data  if @debug
     # intercept the message if it's a heartbeat
     if data.heartbeat
-      console.debug "ReconnectingWebSocket", "heartbeat-received", data.heartbeat  if @debug
+      console.log "ReconnectingWebSocket", "heartbeat-received", data.heartbeat  if @debug
       @heartbeatResponse = HEARTBEAT_RECEIVED
     else
       @onmessage event
 
   _handleWebsocketError: (event) =>
-    console.debug "ReconnectingWebSocket", "onerror", @url, event  if @debug
+    console.log "ReconnectingWebSocket", "onerror", @url, event  if @debug
     @onerror event
 
   _removeEventListeners: =>
-    console.debug "ReconnectingWebSocket", "remove-event-listeners"  if @debug
+    console.log "ReconnectingWebSocket", "remove-event-listeners"  if @debug
     if @ws
       @ws.removeEventListener "open", @_handleWebsocketOpen
       @ws.removeEventListener "close", @_handleWebsocketClose
@@ -197,7 +197,7 @@ class ReconnectingWebSocket
       @ws.removeEventListener "error", @_handleWebsocketError
 
   _disconnect: =>
-    console.debug "ReconnectingWebSocket", "disconnect"  if @debug
+    console.log "ReconnectingWebSocket", "disconnect"  if @debug
     if @ws
       @_removeEventListeners()
       @ws.close()
