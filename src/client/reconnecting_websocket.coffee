@@ -49,82 +49,46 @@ Contributors:
 - Wout Mertens
 ###
 class ReconnectingWebSocket
-  HEARTBEAT_INTERVAL = 10000 # 10 seconds
+  HEALTHCHECK_INTERVAL = 10000 # 10 seconds
 
-  constructor: (url, protocols, Socket) ->
-    if protocols? and typeof protocols is 'function'
-      Socket = protocols
-      protocols = undefined
-    else if typeof Socket isnt 'function'
-      Socket = WebSocket
+  HEARTBEAT_NOT_REQUESTED = 1
+  HEARTBEAT_REQUESTED = 2
+  HEARTBEAT_RECEIVED = 3
 
+  ###
+  Setting this to true is the equivalent of setting all instances of ReconnectingWebSocket.debug to true.
+  ###
+  debugAll: false
+
+  constructor: (url) ->
     # These can be altered by calling code.
     @debug = @debugAll
 
-    # interval between reconnection attempts
-    @reconnectInterval = 4000
-
-    # this is the time it takes to "notice" a disconnection
-    @timeoutInterval = 10000
-
+    # TODO: Do we need/want this? I think it's only for API compatibility. But
+    # do we even care about that, considering this class is only used by ShareJS?
     @forcedClose = false
 
     @url = url
-    @protocols = protocols
-    @readyState = Socket.CONNECTING
+    @readyState = WebSocket.CONNECTING
     @URL = url # Public API
-  
-    timedOut = false
-    connect = (reconnectAttempt) =>
-      @ws = new Socket(@url)
-      console.debug "ReconnectingWebSocket", "attempt-connect", @url  if @debug
 
-      timeout = setTimeout(=>
-        console.debug "ReconnectingWebSocket", "connection-timeout", @url  if @debug
-        timedOut = true
-        @ws.close()
-        timedOut = false
-      , @timeoutInterval)
+    # We have a single health check interval for each ReconnectingWebSocket
+    #
+    # The two main purposes are to:
+    #
+    #  - Trigger a reconnect if we've been in the Socket.CONNECTING state for
+    #    more than 10 seconds.
+    #
+    #  - Trigger a reconnect if we're in the Socket.OPEN state and we have not
+    #    had a heartbeat response from the server for more than 10 seconds
+    #
+    # This interval is also in charge of sending a heartbeat frame to the server
+    # every 10 seconds when in the Socket.OPEN state.
+    #
+    @healthCheckInterval = setInterval @_periodicHealthCheck, HEALTHCHECK_INTERVAL
 
-      @ws.onopen = (event) =>
-        clearTimeout timeout
-        console.debug "ReconnectingWebSocket", "onopen", @url  if @debug
-        @_periodicHeartbeatCheck()
-        @readyState = Socket.OPEN
-        reconnectAttempt = false
-        @onopen event
-
-      @ws.onclose = (event) =>
-        clearTimeout timeout
-        clearInterval @checkInterval
-        @ws = null
-        if @forcedClose
-          @readyState = Socket.CLOSED
-          @onclose event
-        else
-          @readyState = Socket.CONNECTING
-          @onconnecting event
-          if not reconnectAttempt and not timedOut
-            console.debug "ReconnectingWebSocket", "onclose", @url  if @debug
-            @onclose event
-          setTimeout (-> connect true ), @reconnectInterval
-
-      @ws.onmessage = (event) =>
-        data = JSON.parse event.data
-
-        console.debug "ReconnectingWebSocket", "onmessage", @url, event.data  if @debug
-        # intercept the message if it's a heartbeat
-        if data.heartbeat
-          @heartbeat = data.heartbeat
-        else
-          @onmessage event
-
-
-      @ws.onerror = (event) =>
-        console.debug "ReconnectingWebSocket", "onerror", @url, event  if @debug
-        @onerror event
-
-    connect @url
+    # and of course, kick off the initial connect
+    @_connect()
 
   onopen: (event) ->
   onclose: (event) ->
@@ -134,7 +98,7 @@ class ReconnectingWebSocket
 
   send: (data) ->
     if @ws
-      console.debug "ReconnectingWebSocket", "send", @url, data  if @debug
+      console.log "ReconnectingWebSocket", "send", @url, data  if @debug
       @ws.send data
     else
       throw "INVALID_STATE_ERR : Pausing to reconnect websocket"
@@ -145,26 +109,99 @@ class ReconnectingWebSocket
       @ws.close()
 
   ###
-  Setting this to true is the equivalent of setting all instances of ReconnectingWebSocket.debug to true.
-  ###
-  debugAll: false
-  ###
   Additional public API method to refresh the connection if still open (close, re-open).
   For example, if the app suspects bad data / missed heart beats, it can try to refresh.
   ###
   refresh: ->
-    @ws.close()  if @ws
+    console.log "ReconnectingWebSocket", "refresh" if @debug
+    @_reconnect()
 
-  # This checks periodically to see if the server is still responding.
+  # Closes the WebSocket connection or connection attempt and tries again.
+  #
+  # Useful if stuck in a state unexpectedly, or if no heartbeat response
+  # has been received.
+  _reconnect: =>
+    console.log "ReconnectingWebSocket", "reconnect"  if @debug
+    if !@ws || @ws.readyState == WebSocket.CLOSED
+      @_connect()
+    else
+      @_disconnect()
+      @_connect()
+
+  # This checks to see if the server is still responding.
   #
   # If the client does not receive a response within the interval, it
   # will refresh the connection.
-  _periodicHeartbeatCheck: ->
-    @heartbeat = true
-    @checkInterval = setInterval =>
-      if @heartbeat
-        @heartbeat = null
-        @send JSON.stringify "heartbeat"
-      else
-        @refresh()
-    , HEARTBEAT_INTERVAL
+  _checkHeartbeat: =>
+    if @heartbeatResponse == HEARTBEAT_REQUESTED
+      console.log "ReconnectingWebSocket", "no-heartbeat"  if @debug
+      @_reconnect()
+    else
+      @heartbeatResponse = HEARTBEAT_REQUESTED
+      console.log "ReconnectingWebSocket", "send-heartbeat"  if @debug
+      @send JSON.stringify "heartbeat"
+
+  _periodicHealthCheck: =>
+    console.log "ReconnectingWebSocket", "healthcheck"  if @debug
+    switch @readyState
+      when WebSocket.CLOSED then @_reconnect()
+      when WebSocket.CONNECTING then @_reconnect()
+      when WebSocket.OPEN then @_checkHeartbeat()
+
+  _connect: =>
+    @ws = new WebSocket(@url)
+    @readyState = WebSocket.CONNECTING
+    console.log "ReconnectingWebSocket", "attempt-connect", @url  if @debug
+    @ws.addEventListener "open", @_handleWebsocketOpen
+    @ws.addEventListener "close", @_handleWebsocketClose
+    @ws.addEventListener "message", @_handleWebsocketMessage
+    @ws.addEventListener "error", @_handleWebsocketError
+
+  _handleWebsocketOpen: (event) =>
+    console.log "ReconnectingWebSocket", "onopen", @url  if @debug
+    @readyState = WebSocket.OPEN
+    @heartbeatResponse = HEARTBEAT_NOT_REQUESTED
+    @onopen event
+
+  _handleWebsocketClose: (event) =>
+    @ws = null
+    @readyState = WebSocket.CLOSED
+    @onclose event
+
+    if @forcedClose
+      # if we're closing for good, kill the health check interval so it
+      # doesn't try to re-establish the connection
+      clearInterval @healthCheckInterval
+
+  _handleWebsocketMessage: (event) =>
+    data = JSON.parse event.data
+
+    console.log "ReconnectingWebSocket", "onmessage", @url, event.data  if @debug
+    # intercept the message if it's a heartbeat
+    if data.heartbeat
+      console.log "ReconnectingWebSocket", "heartbeat-received", data.heartbeat  if @debug
+      @heartbeatResponse = HEARTBEAT_RECEIVED
+    else
+      @onmessage event
+
+  _handleWebsocketError: (event) =>
+    console.log "ReconnectingWebSocket", "onerror", @url, event  if @debug
+    @onerror event
+
+  _removeEventListeners: =>
+    console.log "ReconnectingWebSocket", "remove-event-listeners"  if @debug
+    if @ws
+      @ws.removeEventListener "open", @_handleWebsocketOpen
+      @ws.removeEventListener "close", @_handleWebsocketClose
+      @ws.removeEventListener "message", @_handleWebsocketMessage
+      @ws.removeEventListener "error", @_handleWebsocketError
+
+  _disconnect: =>
+    console.log "ReconnectingWebSocket", "disconnect"  if @debug
+    if @ws
+      @_removeEventListeners()
+      @ws.close()
+      @readyState = WebSocket.CLOSED
+      @onclose
+        target: this
+        type: "disconnect"
