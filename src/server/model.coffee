@@ -502,26 +502,35 @@ module.exports = Model = (db, options) ->
         return callback? error if error
 
         docTemplate = {v: 0, type: type, snapshot: "", meta: null}
-        results = []
+        opBatchAmount = 1000
 
-        try
-          for op in ops
-            docTemplate.v = op.v + 1
-            docTemplate.snapshot = type.apply(docTemplate.snapshot, op.op)
-            docTemplate.meta = op.meta
+        buildVersions = (callback, ops, results = []) ->
+          if ops.length
+            versionOps = ops.slice(0, opBatchAmount)
 
-            if docTemplate.v % n is 0
-              results.push({
-                v: docTemplate.v,
-                type: docTemplate.type.name,
-                snapshot: docTemplate.snapshot,
-                meta: docTemplate.meta
-              })
+            try
+              for op in versionOps
+                docTemplate.v = op.v + 1
+                docTemplate.snapshot = type.apply(docTemplate.snapshot, op.op)
+                docTemplate.meta = op.meta
 
-          callback? null, results
-        catch e
-          console.error "Op data invalid for #{docName}: #{e.stack}"
-          callback? 'Op data invalid'
+                if docTemplate.v % n is 0
+                  results.push({
+                    v: docTemplate.v,
+                    type: docTemplate.type.name,
+                    snapshot: docTemplate.snapshot,
+                    meta: docTemplate.meta
+                  })
+
+              setTimeout buildVersions.bind(null, callback, ops.slice(opBatchAmount), results)
+            catch e
+              console.error "Op data invalid for #{docName}: #{e.stack}"
+              callback? 'Op data invalid'
+
+          else
+            callback? null, results
+
+        setTimeout buildVersions.bind(null, callback, ops)
 
   # Gets the snapshot data for the specified document at the requested version.
   # This is much less efficient than using getSnapshot() to fetch the latest version
