@@ -14,7 +14,7 @@
   "author": "Joseph Gentle <josephg@gmail.com>",
   "dependencies": {
     "sockjs": ">= 0.3.1",
-    "socket.io": "~0.8",
+    "socket.io": "~2.3",
     "socket.io-client": "~0.8",
     "browserchannel": "~1",
     "ws": "0.4.32",
