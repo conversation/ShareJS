@@ -61,7 +61,7 @@ window.sharejs.extendDoc 'attach_textarea', (elem) ->
         prevvalue = elem.value
         applyChange doc, doc.getText(), elem.value.replace /\r\n/g, '\n'
 
-  for event in ['textInput', 'keydown', 'keyup', 'select', 'cut', 'paste']
+  for event in ['input', 'textInput', 'keydown', 'keyup', 'select', 'cut', 'paste']
     if elem.addEventListener
       elem.addEventListener event, genOp, false
     else
@@ -71,7 +71,7 @@ window.sharejs.extendDoc 'attach_textarea', (elem) ->
     @removeListener 'insert', insert_listener
     @removeListener 'delete', delete_listener
 
-    for event in ['textInput', 'keydown', 'keyup', 'select', 'cut', 'paste']
+    for event in ['input', 'textInput', 'keydown', 'keyup', 'select', 'cut', 'paste']
       if elem.removeEventListener
         elem.removeEventListener event, genOp, false
       else

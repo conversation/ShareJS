@@ -76,7 +76,7 @@
         }
       });
     };
-    _ref = ['textInput', 'keydown', 'keyup', 'select', 'cut', 'paste'];
+    _ref = ['input', 'textInput', 'keydown', 'keyup', 'select', 'cut', 'paste'];
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       event = _ref[_i];
       if (elem.addEventListener) {
@@ -90,7 +90,7 @@
         var _j, _len1, _ref1, _results;
         _this.removeListener('insert', insert_listener);
         _this.removeListener('delete', delete_listener);
-        _ref1 = ['textInput', 'keydown', 'keyup', 'select', 'cut', 'paste'];
+        _ref1 = ['input', 'textInput', 'keydown', 'keyup', 'select', 'cut', 'paste'];
         _results = [];
         for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
           event = _ref1[_j];
