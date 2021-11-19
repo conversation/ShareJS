@@ -2,24 +2,28 @@
 
 require('coffee-script');
 
-var connect = require('connect'),
-	sys = require('sys'),
-	sharejs = require('../src'),
-	server;
+var express = require('express')
+var sharejs = require('../src')
 
-server = connect(connect.logger());
+var app = express();
+
+app.use(function (request, response, next) {
+  response.setHeader('Access-Control-Allow-Origin', '*');
+  response.setHeader('Access-Control-Max-Age', '3600');
+  next();
+});
 
 options = require('./options') || {};
 
-sys.puts("ShareJS server v" + sharejs.version);
+console.log("ShareJS server v" + sharejs.version);
 
 // Attach the sharejs REST and Socket.io interfaces to the server
-sharejs.server.attach(server, options);
+var server = sharejs.server.attach(app, options);
 
 var port = options.port || 8000;
 
 server.listen(port);
-sys.puts('Server running at http://127.0.0.1:' + port + '/');
+console.log('Server running at http://127.0.0.1:' + port + '/');
 
 process.title = 'sharejs'
 process.on('uncaughtException', function (err) {
