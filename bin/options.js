@@ -46,7 +46,9 @@ module.exports = {
   browserChannel: {},
 
   // Websocket server options. Set websocket:null to disable websocket support.
-  websocket: {},
+  websocket: {
+    headers: { "Access-Control-Allow-Origin": "*" },
+  },
 
 	// Authentication code to test if clients are allowed to perform different actions.
 	// See documentation for details.
