@@ -19,6 +19,10 @@ module.exports = {
     operations_table: 'operations',
     snapshot_table: 'snapshots',
 
+    // If you prefer to use postgres over TCP/IP, you can just pass in a connectionString
+    // instead of the database name and host shown above:
+    //connectionString: "postgres://user@db_host:5432/db_name"
+
     // By default, sharejs will create its tables in a schema called 'sharejs'.
     //schema: 'sharejs',
 	},
