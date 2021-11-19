@@ -1,7 +1,7 @@
 // ShareJS options
 module.exports = {
 	// Port to listen on
-	port: 8000,
+	port: 9000,
 
 	// Database options
 	db: {
