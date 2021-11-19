@@ -5,57 +5,22 @@ module.exports = {
 
 	// Database options
 	db: {
-		// DB type. Options are 'redis', 'couchdb' or 'none'. 'redis' requires the
-		// redis npm package.
+		// DB type. Options are 'postgres' or 'none'.
     //
     // If you don't want a database, you can also say db: null. With no database,
     // all documents are deleted when the server restarts.
-
-    // By default, sharejs tries to use the redis DB backend.
-		// type: 'redis',
-
-		// The hostname, port and options to pass to redis.
-		// null lets the database decide - redis by default connects to localhost port 6379.
-		//hostname: null,
-		//port: null,
-		//redisOptions: null
-
-
-		// To use CouchDB uncomment this section then run bin/setup_couch.
-    // Database URI Defaults to http://localhost:5984/sharejs .
-		//type: 'couchdb',
-		//uri: "http://admin:admin@localhost:5984/ot",
+    type: 'pg',
 
     // Uses postgres over unix socket by default, you must `createdb sharejs_example`
     // manually first, the tables will be created automatically.
-    type: 'pg',
     schema: "public",
     database: "sharejs_example",
     host: "/var/run/postgresql",
     operations_table: 'operations',
     snapshot_table: 'snapshots',
 
-    // To use mysql uncomment this section then run bin/setup_mysql
-    //database:'db_name',
-    //host:'localhost',
-    //user:'foo',
-    //password:'bar',
-
     // By default, sharejs will create its tables in a schema called 'sharejs'.
     //schema: 'sharejs',
-
-    // sharejs will automatically try and create the DB tables if they don't exist. You
-    // can create the database tables manually using bin/setup_pg.
-    //create_tables_automatically: true,
-
-    // To use amazon uncomment this section then run bin/setup_amazon
-    //type: 'amazon',
-    //amazon_region: 'us-east-1',
-    //amazon_access_key: '',
-    //amazon_secret_key: '',
-    //amazon_s3_snapshots_bucket_name: '',
-    //amazon_dynamo_snapshots_table_name: '',
-    //amazon_dynamo_operations_table_name: '',
 	},
 
 	// The server will statically host webclient/ directory at /share/*.
