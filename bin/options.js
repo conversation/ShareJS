@@ -27,10 +27,13 @@ module.exports = {
 		//uri: "http://admin:admin@localhost:5984/ot",
 
     // Uses postgres over unix socket by default, you must `createdb sharejs_example`
-    // manually first.
+    // manually first, the tables will be created automatically.
     type: 'pg',
-    host: "/var/run/postgresql",
+    schema: "public",
     database: "sharejs_example",
+    host: "/var/run/postgresql",
+    operations_table: 'operations',
+    snapshot_table: 'snapshots',
 
     // To use mysql uncomment this section then run bin/setup_mysql
     //database:'db_name',
@@ -40,8 +43,6 @@ module.exports = {
 
     // By default, sharejs will create its tables in a schema called 'sharejs'.
     //schema: 'sharejs',
-    //operations_table: 'ops',
-    //snapshot_table: 'snapshots',
 
     // sharejs will automatically try and create the DB tables if they don't exist. You
     // can create the database tables manually using bin/setup_pg.
