@@ -38,13 +38,9 @@ If you need to re-compile the web client code, just run `npm install` again, or 
 Running tests
 -------------
 
-As of right now, you will need an old version of nodeunit for this: `npm install -g nodeunit@0.9.0`)
+This project uses a pretty old version of nodeunit, but all tests can easily be run with:
 
-    # cake test
-
-The test output is suppressed by default, but can be enabled using the `--verbose` option:
-
-    # cake --verbose test
+    npm run test
 
 Running a server
 ----------------
