@@ -21,5 +21,8 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: '16.x'
+      - run: |
+          sudo apt-get install postgresql libpq-dev
+          sudo service postgresql start
       - run: npm install
       - run: npm run test
