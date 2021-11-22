@@ -33,7 +33,7 @@ Run a standalone example server by first creating a postgres database, then runn
 
 See `bin/options.js` for how to configure the example server.
 
-If you need to re-compile the web client code, just run `npm install` again, or alternatively you can use `cake webclient`.
+If you need to re-compile the web client code, just run `npm install` again, or alternatively you can use `npm run prepublish`.
 
 Running tests
 -------------
