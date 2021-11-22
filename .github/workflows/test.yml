@@ -25,5 +25,6 @@ jobs:
           sudo apt-get install postgresql libpq-dev
           sudo service postgresql start
           sudo -u postgres createuser --superuser runner
+          sudo -u postgres createdb sharejs_example
       - run: npm install
       - run: npm run test
