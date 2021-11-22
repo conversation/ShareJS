@@ -15,55 +15,32 @@ ShareJS **should** work with all of them ![logos of all of all the browsers](htt
 That said, I only test regularly with FF, Safari and Chrome, and occasionally with IE8+. **File bug reports if you have issues**
 
 
-Installing and running
-----------------------
+Developing locally
+------------------
 
-    # npm install share
+Install required packages, and compile the web client code:
 
-Run the examples with:
+    npm install
 
-    # sharejs-exampleserver
+Run the simple example server which includes basic clients with:
 
-If you want redis support, you'll need to install redis:
+    ./bin/exampleserver
 
-    # brew install redis
-    # npm install -g redis
+Run a standalone example server by first creating a postgres database, then running the example server itself:
 
-### From source
+    createdb sharejs_example
+    ./bin/sharejs
 
-Install redis (optional)
+See `bin/options.js` for how to configure the example server.
 
-* Mac:
+If you need to re-compile the web client code, just run `npm install` again, or alternatively you can use `npm run prepublish`.
 
-        # brew install redis
+Running tests
+-------------
 
-* Linux:
+This project uses a pretty old version of nodeunit, but all tests can easily be run with:
 
-        # sudo apt-get install redis
-
-Then:
-
-    # git clone git://github.com/josephg/ShareJS.git
-    # cd ShareJS
-    # npm install redis   # If you want redis support
-    # npm link
-
-Run the tests: (you will need an old version of nodeunit for this: `npm install -g nodeunit@0.9.0`)
-
-    # cake test
-
-The test output is suppressed by default, but can be enabled using the `--verbose` option:
-
-    # cake --verbose test
-
-Build the coffeescript into .js:
-
-    # cake build
-    # cake webclient
-
-Run the example server:
-
-    # bin/exampleserver
+    npm run test
 
 Running a server
 ----------------
@@ -81,15 +58,15 @@ There are two ways to run a sharejs server:
           connect.static(__dirname + '/my_html_files')
         );
 
-    var options = {db: {type: 'none'}}; // See docs for options. {type: 'redis'} to enable persistance.
+    var options = {db: {type: 'none'}}; // See docs for options. {type: 'pg'} to enable persistance.
 
     // Attach the sharejs REST and Socket.io interfaces to the server
     server = sharejs.attach(app, options);
 
-    server.listen(8000);
-    console.log('Server running at http://127.0.0.1:8000/');
+    server.listen(9000);
+    console.log('Server running at http://127.0.0.1:9000/');
     ```
-    The above script will start up a ShareJS server on port 8000 which hosts static content from the `my_html_files` directory. See [bin/exampleserver](https://github.com/josephg/ShareJS/blob/master/bin/exampleserver) for a more complex configuration example.
+    The above script will start up a ShareJS server on port 9000 which hosts static content from the `my_html_files` directory. See [bin/exampleserver](https://github.com/josephg/ShareJS/blob/master/bin/exampleserver) for a more complex configuration example.
 
     > See the [Connect](http://senchalabs.github.com/connect/) or [Express](http://expressjs.com/) documentation for more complex routing.
 
