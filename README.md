@@ -1,4 +1,4 @@
-ShareJS [![Build Status](https://secure.travis-ci.org/conversation/ShareJS.png?branch=master)](http://travis-ci.org/conversation/ShareJS)
+ShareJS ![Build status](https://github.com/conversation/ShareJS/actions/workflows/test.yml/badge.svg?branch=master)
 =======
 
 **This is a fork of version 0.6.3 of the original [ShareJS](https://github.com/josephg/ShareJS) library.**
