@@ -98,8 +98,6 @@ task 'webclient', 'Build the web client into one file', ->
   # TODO: This should also be closure compiled.
   extrafiles = expandNames extras
   exec "coffee --compile --output webclient/ #{extrafiles}"
-  # For backwards compatibility. (The ace.js file used to be called share-ace.js)
-  cp "-f", "webclient/ace.js", "webclient/share-ace.js"
   cp "-f", "src/lib-etherpad/*", "webclient/"
 
 option '-V', '--version [version]', 'The new patch version'
