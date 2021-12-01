@@ -22,12 +22,12 @@ Dynamically update html content as a document changes
 Dynamically render markdown as a document is edited.
 
 
-ace
+cm
 ---
 
-The ace editor live editing a sharejs document.
+The CodeMirror editor live editing a sharejs document.
 
-Browse to http://localhost:8000/ace/
+Browse to http://localhost:8000/cm/
 
 
 staticrender
