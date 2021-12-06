@@ -42,9 +42,3 @@ Eg: http://localhost:8000/static/html
 Some of the logic to wire this demo up is in `bin/exampleserver`. You should have a read.
 
 The documents are rendered statically on the server, so they don't update when as you edit them. You could obviously mix in the code from the html demo to make this also re-render as the document changes.
-
-
-wiki
-----
-
-A more complicated demo showing a wiki.
