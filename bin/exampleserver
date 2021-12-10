@@ -38,12 +38,6 @@ var options = {
   }
 };
 
-// Lets try and enable redis persistance if redis is installed...
-try {
-  require('redis');
-  options.db = {type: 'redis'};
-} catch (e) {}
-
 console.log("ShareJS example server v" + sharejs.version);
 console.log("Options: ", options);
 
