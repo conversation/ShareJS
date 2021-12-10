@@ -38,12 +38,6 @@ var options = {
   }
 };
 
-// Lets try and enable redis persistance if redis is installed...
-try {
-  require('redis');
-  options.db = {type: 'redis'};
-} catch (e) {}
-
 console.log("ShareJS example server v" + sharejs.version);
 console.log("Options: ", options);
 
@@ -51,24 +45,6 @@ var port = argv.p;
 
 // Attach the sharejs REST and Socket.io interfaces to the server
 var server = sharejs.server.attach(app, options);
-
-var renderer = require('../examples/_static');
-app.get('/static/:docName', function(req, res, next) {
-  var docName;
-  docName = req.params.docName;
-  renderer(docName, app.model, res, next);
-});
-
-var wiki = require('../examples/_wiki');
-app.get('/wiki/?', function(req, res, next) {
-  res.writeHead(301, {location: '/wiki/Main'});
-  res.end();
-});
-app.get('/wiki/:docName', function(req, res, next) {
-  var docName;
-  docName = req.params.docName;
-  wiki(docName, app.model, res, next);
-});
 
 app.get('/pad/?', function(req, res, next) {
   var docName;
