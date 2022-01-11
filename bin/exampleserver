@@ -21,7 +21,9 @@ app.use(express.static(__dirname + '/../examples'));
 
 var options = {
   db: {type: 'none'},
-  browserChannel: {cors: '*'},
+  // browserChannel: {cors: '*'},
+  browserChannel: null,
+  socketio: null,
   websocket: {
     prefix: '/websocket',
     trackStats: function(stats) {

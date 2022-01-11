@@ -29,7 +29,7 @@ else
   socketImpl = null
 
 class Connection
-  constructor: (host, authentication) ->
+  constructor: (host, authentication, overrideSocketImpl) ->
     # Map of docname -> doc
     @docs = {}
 
@@ -42,11 +42,13 @@ class Connection
     @state = 'connecting'
 
     if host.match /^wss?:/ then socketImpl = 'websocket'
+    if overrideSocketImpl then socketImpl = overrideSocketImpl
 
     @socket = switch socketImpl
       when 'channel' then new BCSocket(host, reconnect:true)
       when 'sockjs' then new ReconnectingWebSocket(host, SockJS)
       when 'websocket' then new ReconnectingWebSocket(host)
+      when 'managedwebsocket' then new ManagedWebSocket(host)
       else new BCSocket(host, reconnect:true)
 
     @socket.onmessage = (msg) =>
@@ -131,7 +133,7 @@ class Connection
     @socket.close()
 
   # *** Doc management
- 
+
   makeDoc: (name, data, callback) ->
     throw new Error("Doc #{name} already open") if @docs[name]
     doc = new Doc(@, name, data)

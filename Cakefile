@@ -79,6 +79,7 @@ client = [
   'types/text-api'
   'client/doc'
   'client/reconnecting_websocket'
+  'client/managed_websocket'
   'client/connection'
   'client/index'
 ]
