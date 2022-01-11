@@ -52,7 +52,7 @@ class Connection
       else new BCSocket(host, reconnect:true)
 
     @socket.onmessage = (msg) =>
-      msg = JSON.parse(msg.data) if socketImpl in ['sockjs', 'websocket', 'managedwebsocket']
+      msg = JSON.parse(msg.data) unless socketImpl == "channel"
       if msg.auth is null
         # Auth failed.
         @lastError = msg.error # 'forbidden'
@@ -124,7 +124,7 @@ class Connection
         @lastSentDoc = docName
 
     #console.warn 'c->s', data
-    data = JSON.stringify(data) if socketImpl in ['sockjs', 'websocket', 'managedwebsocket']
+    data = JSON.stringify(data) unless socketImpl == "channel"
     @socket.send data
 
   disconnect: ->

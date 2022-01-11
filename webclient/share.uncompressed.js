@@ -1332,7 +1332,7 @@
       this.socket.onmessage = (function(_this) {
         return function(msg) {
           var docName;
-          if (socketImpl === 'sockjs' || socketImpl === 'websocket' || socketImpl === 'managedwebsocket') {
+          if (socketImpl !== "channel") {
             msg = JSON.parse(msg.data);
           }
           if (msg.auth === null) {
@@ -1416,7 +1416,7 @@
           this.lastSentDoc = docName;
         }
       }
-      if (socketImpl === 'sockjs' || socketImpl === 'websocket' || socketImpl === 'managedwebsocket') {
+      if (socketImpl !== "channel") {
         data = JSON.stringify(data);
       }
       return this.socket.send(data);
