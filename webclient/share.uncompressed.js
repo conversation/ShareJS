@@ -1320,7 +1320,7 @@
           case 'sockjs':
             return new ReconnectingWebSocket(host, SockJS);
           case 'websocket':
-            return new ReconnectingWebSocket(host);
+            return new ManagedWebSocket(host);
           case 'managedwebsocket':
             return new ManagedWebSocket(host);
           default:

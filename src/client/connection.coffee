@@ -47,7 +47,7 @@ class Connection
     @socket = switch socketImpl
       when 'channel' then new BCSocket(host, reconnect:true)
       when 'sockjs' then new ReconnectingWebSocket(host, SockJS)
-      when 'websocket' then new ReconnectingWebSocket(host)
+      when 'websocket' then new ManagedWebSocket(host)
       when 'managedwebsocket' then new ManagedWebSocket(host)
       else new BCSocket(host, reconnect:true)
 
