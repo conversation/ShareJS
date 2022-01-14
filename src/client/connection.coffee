@@ -1,9 +1,7 @@
-# A Connection wraps a persistant BC connection to a sharejs server.
+# A Connection wraps a persistant WebSocket connection to a sharejs server.
 #
 # This class implements the client side of the protocol defined here:
 # https://github.com/josephg/ShareJS/wiki/Wire-Protocol
-#
-# The equivalent server code is in src/server/browserchannel.coffee.
 #
 # This file is a bit of a mess. I'm dreadfully sorry about that. It passes all the tests,
 # so I have hope that its *correct* even if its not clean.
@@ -13,19 +11,15 @@
 
 if WEB?
   types = exports.types
-  {BCSocket, SockJS, WebSocket} = window
-  if BCSocket
-    socketImpl = 'channel'
+  {SockJS, WebSocket} = window
+  if SockJS
+    socketImpl = 'sockjs'
   else
-    if SockJS
-      socketImpl = 'sockjs'
-    else
-      socketImpl = 'websocket'
+    socketImpl = 'websocket'
 else
   types = require '../types'
-  {BCSocket} = require 'browserchannel'
   Doc = require('./doc').Doc
-  WebSocket = require 'ws'
+  ReconnectingWebSocket = require './reconnecting_websocket'
   socketImpl = null
 
 class Connection
@@ -44,13 +38,11 @@ class Connection
     if host.match /^wss?:/ then socketImpl = 'websocket'
 
     @socket = switch socketImpl
-      when 'channel' then new BCSocket(host, reconnect:true)
       when 'sockjs' then new ReconnectingWebSocket(host, SockJS)
-      when 'websocket' then new ReconnectingWebSocket(host)
-      else new BCSocket(host, reconnect:true)
+      else new ReconnectingWebSocket(host)
 
     @socket.onmessage = (msg) =>
-      msg = JSON.parse(msg.data) if socketImpl in ['sockjs', 'websocket']
+      msg = JSON.parse(msg.data)
       if msg.auth is null
         # Auth failed.
         @lastError = msg.error # 'forbidden'
@@ -122,7 +114,7 @@ class Connection
         @lastSentDoc = docName
 
     #console.warn 'c->s', data
-    data = JSON.stringify(data) if socketImpl in ['sockjs', 'websocket']
+    data = JSON.stringify(data)
     @socket.send data
 
   disconnect: ->
@@ -131,7 +123,7 @@ class Connection
     @socket.close()
 
   # *** Doc management
- 
+
   makeDoc: (name, data, callback) ->
     throw new Error("Doc #{name} already open") if @docs[name]
     doc = new Doc(@, name, data)

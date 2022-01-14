@@ -48,6 +48,10 @@ Contributors:
 - Didier Colens
 - Wout Mertens
 ###
+
+if !WEB?
+  WebSocket = require 'ws'
+
 class ReconnectingWebSocket
   HEALTHCHECK_INTERVAL = 10000 # 10 seconds
 
@@ -152,10 +156,10 @@ class ReconnectingWebSocket
     @ws = new WebSocket(@url)
     @readyState = WebSocket.CONNECTING
     console.log "ReconnectingWebSocket", "attempt-connect", @url  if @debug
-    @ws.addEventListener "open", @_handleWebsocketOpen
-    @ws.addEventListener "close", @_handleWebsocketClose
-    @ws.addEventListener "message", @_handleWebsocketMessage
-    @ws.addEventListener "error", @_handleWebsocketError
+    @ws.onopen = @_handleWebsocketOpen
+    @ws.onclose = @_handleWebsocketClose
+    @ws.onmessage = @_handleWebsocketMessage
+    @ws.onerror = @_handleWebsocketError
 
   _handleWebsocketOpen: (event) =>
     console.log "ReconnectingWebSocket", "onopen", @url  if @debug
@@ -191,10 +195,10 @@ class ReconnectingWebSocket
   _removeEventListeners: =>
     console.log "ReconnectingWebSocket", "remove-event-listeners"  if @debug
     if @ws
-      @ws.removeEventListener "open", @_handleWebsocketOpen
-      @ws.removeEventListener "close", @_handleWebsocketClose
-      @ws.removeEventListener "message", @_handleWebsocketMessage
-      @ws.removeEventListener "error", @_handleWebsocketError
+      @ws.onopen = null
+      @ws.onclose = null
+      @ws.onmessage = null
+      @ws.onerror = null
 
   _disconnect: =>
     console.log "ReconnectingWebSocket", "disconnect"  if @debug
@@ -205,3 +209,5 @@ class ReconnectingWebSocket
       @onclose
         target: this
         type: "disconnect"
+
+module.exports = ReconnectingWebSocket unless WEB?

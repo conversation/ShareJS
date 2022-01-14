@@ -53,10 +53,10 @@ section {
   height: 18px;
   border: 1px solid #CCC;
   outline: none;
-  
+
   -webkit-border-radius: 3px;
   border-radius: 3px;
-  
+
   -webkit-box-shadow: 0 1px 2px rgba(0,0,0,.1);
   -moz-box-shadow: 0 1px 2px rgba(0,0,0,.1);
   box-shadow: 0 1px 2px rgba(0,0,0,.1);
@@ -80,7 +80,7 @@ section {
 		<title></title>
 	</head>
 	<body onload="prettyPrint()">
-	
+
     <div class="topbar">
       <div class="fill">
         <div class="container">
@@ -110,7 +110,7 @@ in your app.</p>
 
 <div class="row">
 <div class="span6 offset1">
-  <h3>Here’s etherpad in 4 lines.</h3>  
+  <h3>Here’s etherpad in 4 lines.</h3>
   <textarea id="pad" rows="8" disabled>Loading. (Or it's probably broken and you should come back later.)</textarea>
   <span class="help-block">Everyone viewing this page can see your edits live. Open this in another browser window for maximum wow.</span>
 </div>
@@ -195,7 +195,6 @@ You’re writing a web app. Your app contains data that users edit. Your users s
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.17/jquery-ui.min.js"></script>
-<script src="/channel/bcsocket.js"></script>
 <script src="/share/share.uncompressed.js"></script>
 <script src="/share/textarea.js"></script>
 <script src="/lib/prettify.js"></script>
@@ -204,7 +203,7 @@ You’re writing a web app. Your app contains data that users edit. Your users s
 $(function() {
   // *** Editor window
   var elem = document.getElementById('pad');
-  
+
   var connection = sharejs.open('blag', 'text', function(error, doc) {
   	if (error) {
   		console.log(error);
@@ -227,7 +226,7 @@ $(function() {
   register('connecting', 'warning', 'Connecting...');
   register('disconnected', 'important', 'Offline');
   register('stopped', 'important', 'Error');
-  
+
   // *** Draggable trains example
   sharejs.open('thomas', 'json', function(error, doc) {
     if (error) {
@@ -236,7 +235,7 @@ $(function() {
       }
       return;
     }
-    
+
     if (doc.created) {
       doc.set(["Thomas the Tank Engine",
         "Edward the Blue Engine",
@@ -247,14 +246,14 @@ $(function() {
         "The Fat Controller"
       ]);
     }
-    
+
     var trains = doc.get();
     $.each(trains, function(i, train) {
       $('#trains').append($('<li>').text(trains[i])); //.attr('data-id', i)
     });
 
     var dragFrom = null;
-    
+
     doc.at().on('move', function(from, to) {
       //console.log('move', from, to);
       if (dragFrom === from) {
@@ -274,8 +273,8 @@ $(function() {
             .insertAfter($('#trains :nth-child(' + to + ')'));
         }
       }
-    });    
-    
+    });
+
     $("#trains").sortable({
       helper: 'clone',
       start: function(event, ui) {
@@ -298,7 +297,7 @@ $(function() {
       },
       axis: 'y'
     });
-    
+
     $("#trains").disableSelection();
   });
 });

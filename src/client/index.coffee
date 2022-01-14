@@ -12,15 +12,11 @@
 
 
 if WEB?
-  hasBCSocket = window.BCSocket isnt undefined
   hasSockJS = window.SockJS isnt undefined
-  if hasBCSocket
-    socketImpl = 'channel'
+  if hasSockJS
+    socketImpl = 'sockjs'
   else
-    if hasSockJS
-      socketImpl = 'sockjs'
-    else
-      socketImpl = 'websocket'
+    socketImpl = 'websocket'
 else
   Connection = require('./connection').Connection
 
@@ -35,9 +31,7 @@ exports.open = do ->
 
   getConnection = (origin, authentication) ->
     if WEB? and !origin?
-      location = window.location
-      protocol = if socketImpl == 'websocket' then 'ws:' else location.protocol
-      origin = "#{protocol}//#{location.host}/#{socketImpl}"
+      origin = "ws://#{window.location.host}/#{socketImpl}"
 
     unless connections[origin]
       c = new Connection origin, authentication
