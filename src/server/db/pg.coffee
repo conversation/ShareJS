@@ -28,6 +28,7 @@ pg = require('pg').native
 defaultOptions =
   schema: 'sharejs'
   client: null                      # An optional instance of pg.Client
+  pool: null                        # An optional instance of pg.Pool
   uri: null                         # An optional uri for connection
   create_tables_automatically: true
   operations_table: 'ops'
@@ -39,9 +40,13 @@ module.exports = PgDb = (options) ->
   options ?= {}
   options[k] ?= v for k, v of defaultOptions
 
-  client = options.client or new pg.Client options
+  client = options.pool or options.client or new pg.Client options
 
-  client.connect()
+  # If we're using a pool, we don't need to connect as we perform queries from the pool directly
+  # This prevents us using transactions, but will auto-reconnect if the connection is lost
+  # https://node-postgres.com/apis/pool#poolquery
+  if !options.pool
+    client.connect()
 
   snapshot_table = options.schema and "#{options.schema}.#{options.snapshot_table}" or options.snapshot_table
   operations_table = options.schema and "#{options.schema}.#{options.operations_table}" or options.operations_table
