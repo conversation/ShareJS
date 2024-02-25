@@ -332,9 +332,16 @@ module.exports = Model = (db, options) ->
         clearTimeout doc.reapTimer
         doc.reapTimer = reapTimer = setTimeout ->
             tryWriteSnapshot docName, ->
-              # If the reaping timeout has been refreshed while we're writing the snapshot, or if we're
-              # in the middle of applying an operation, don't reap.
-              delete docs[docName] if docs[docName].reapTimer is reapTimer and doc.opQueue.busy is false
+              # If the document has newly added listeners, or the reaping timeout has been refreshed
+              # while we're writing the snapshot, or if we're in the middle of applying an operation,
+              # don't reap.
+              #
+              # Listeners can appear on the document "late" if they were in the middle of the catchup
+              # phase when `nextTick` was first called above.
+              if doc.eventEmitter.listeners('op').length == 0 and
+                  docs[docName].reapTimer is reapTimer and
+                  doc.opQueue.busy is false
+                delete docs[docName]
           , options.reapTime
 
   tryWriteSnapshot = (docName, callback) ->
