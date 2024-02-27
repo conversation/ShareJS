@@ -73,7 +73,8 @@ json.apply = (snapshot, op) ->
       else if c.sd != undefined
         # String delete
         throw new Error 'Referenced element not a string' unless typeof elem is 'string'
-        throw new Error 'Deleted string does not match' unless elem[key...key + c.sd.length] == c.sd
+        debugDeleteOp = "1: #{JSON.stringify elem[key...key + c.sd.length]} 2: #{JSON.stringify(c.sd)}"
+        throw new Error "Deleted string does not match (#{debugDeleteOp})" unless elem[key...key + c.sd.length] == c.sd
         parent[parentkey] = elem[...key] + elem[key + c.sd.length..]
 
       else if c.li != undefined && c.ld != undefined

@@ -138,7 +138,7 @@ module.exports = Model = (db, options) ->
       try
         snapshot = doc.type.apply doc.snapshot, opData.op
       catch error
-        console.error error.stack
+        console.error docName, error.stack
         return callback error.message
 
       # The op data should be at the current version, and the new document data should be at
