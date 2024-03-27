@@ -568,7 +568,7 @@
     };
 
     Doc.prototype._onMessage = function(msg) {
-      var callback, docOp, error, oldInflightOp, op, path, response, undo, value, _i, _j, _len, _len1, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6;
+      var callback, docOp, error, oldInflightOp, op, path, response, serverOpMaxV, serverOpVs, undo, v, value, versionRange, _i, _j, _k, _l, _len, _len1, _len2, _ref, _ref1, _ref10, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9, _results;
       switch (false) {
         case msg.open !== true:
           this.state = 'open';
@@ -595,6 +595,29 @@
           }
           if (msg.v != null) {
             this.version = msg.v;
+          }
+          serverOpVs = Object.keys(this.serverOps).map(function(v) {
+            return parseInt(v);
+          });
+          serverOpMaxV = Math.max.apply(Math, serverOpVs);
+          versionRange = (function() {
+            _results = [];
+            for (var _i = _ref = this.version, _ref1 = Math.max(serverOpMaxV, this.version); _ref <= _ref1 ? _i <= _ref1 : _i >= _ref1; _ref <= _ref1 ? _i++ : _i--){ _results.push(_i); }
+            return _results;
+          }).apply(this);
+          if (serverOpMaxV >= this.version) {
+            for (_j = 0, _len = versionRange.length; _j < _len; _j++) {
+              v = versionRange[_j];
+              docOp = this.serverOps[v];
+              if (this.inflightOp !== null) {
+                _ref2 = this._xf(this.inflightOp, docOp), this.inflightOp = _ref2[0], docOp = _ref2[1];
+              }
+              if (this.pendingOp !== null) {
+                _ref3 = this._xf(this.pendingOp, docOp), this.pendingOp = _ref3[0], docOp = _ref3[1];
+              }
+              this.version++;
+              this._otApply(docOp, true);
+            }
           }
           if (this.inflightOp) {
             response = {
@@ -629,7 +652,7 @@
           return this._closeCallback = null;
         case !(msg.op === null && error === 'Op already submitted'):
           break;
-        case !((msg.op === void 0 && msg.v !== void 0) || (msg.op && (_ref = msg.meta.source, __indexOf.call(this.inflightSubmittedIds, _ref) >= 0))):
+        case !((msg.op === void 0 && msg.v !== void 0) || (msg.op && (_ref4 = msg.meta.source, __indexOf.call(this.inflightSubmittedIds, _ref4) >= 0))):
           oldInflightOp = this.inflightOp;
           this.inflightOp = null;
           this.inflightSubmittedIds.length = 0;
@@ -638,15 +661,15 @@
             if (this.type.invert) {
               undo = this.type.invert(oldInflightOp);
               if (this.pendingOp) {
-                _ref1 = this._xf(this.pendingOp, undo), this.pendingOp = _ref1[0], undo = _ref1[1];
+                _ref5 = this._xf(this.pendingOp, undo), this.pendingOp = _ref5[0], undo = _ref5[1];
               }
               this._otApply(undo, true);
             } else {
               this.emit('error', "Op apply failed (" + error + ") and the op could not be reverted");
             }
-            _ref2 = this.inflightCallbacks;
-            for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
-              callback = _ref2[_i];
+            _ref6 = this.inflightCallbacks;
+            for (_k = 0, _len1 = _ref6.length; _k < _len1; _k++) {
+              callback = _ref6[_k];
               callback(error);
             }
           } else {
@@ -656,9 +679,9 @@
             this.serverOps[this.version] = oldInflightOp;
             this.version++;
             this.emit('acknowledge', oldInflightOp);
-            _ref3 = this.inflightCallbacks;
-            for (_j = 0, _len1 = _ref3.length; _j < _len1; _j++) {
-              callback = _ref3[_j];
+            _ref7 = this.inflightCallbacks;
+            for (_l = 0, _len2 = _ref7.length; _l < _len2; _l++) {
+              callback = _ref7[_l];
               callback(null, oldInflightOp);
             }
           }
@@ -670,22 +693,25 @@
           if (msg.doc !== this.name) {
             return this.emit('error', "Expected docName '" + this.name + "' but got " + msg.doc);
           }
-          if (msg.v !== this.version) {
-            return this.emit('error', "Expected version " + this.version + " but got " + msg.v);
-          }
           op = msg.op;
-          this.serverOps[this.version] = op;
-          docOp = op;
-          if (this.inflightOp !== null) {
-            _ref4 = this._xf(this.inflightOp, docOp), this.inflightOp = _ref4[0], docOp = _ref4[1];
+          this.serverOps[msg.v] = op;
+          if (this.state === 'open') {
+            if (msg.v !== this.version) {
+              return this.emit('error', "Expected version " + this.version + " but got " + msg.v);
+            }
+            docOp = op;
+            if (this.inflightOp !== null) {
+              _ref8 = this._xf(this.inflightOp, docOp), this.inflightOp = _ref8[0], docOp = _ref8[1];
+            }
+            if (this.pendingOp !== null) {
+              _ref9 = this._xf(this.pendingOp, docOp), this.pendingOp = _ref9[0], docOp = _ref9[1];
+            }
+            this.version++;
+            return this._otApply(docOp, true);
           }
-          if (this.pendingOp !== null) {
-            _ref5 = this._xf(this.pendingOp, docOp), this.pendingOp = _ref5[0], docOp = _ref5[1];
-          }
-          this.version++;
-          return this._otApply(docOp, true);
+          break;
         case !msg.meta:
-          _ref6 = msg.meta, path = _ref6.path, value = _ref6.value;
+          _ref10 = msg.meta, path = _ref10.path, value = _ref10.value;
           switch (path != null ? path[0] : void 0) {
             case 'shout':
               return this.emit('shout', value);
