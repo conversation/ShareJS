@@ -88,7 +88,7 @@ var WEB = true;
   };
 
   json.apply = function(snapshot, op) {
-    var c, container, e, elem, error, i, key, p, parent, parentkey, _i, _j, _len, _len1, _ref;
+    var c, container, debugDeleteOp, e, elem, error, i, key, p, parent, parentkey, _i, _j, _len, _len1, _ref;
     json.checkValidOp(op);
     op = clone(op);
     container = {
@@ -126,8 +126,9 @@ var WEB = true;
           if (typeof elem !== 'string') {
             throw new Error('Referenced element not a string');
           }
+          debugDeleteOp = "1: " + (JSON.stringify(elem.slice(key, key + c.sd.length))) + " 2: " + (JSON.stringify(c.sd));
           if (elem.slice(key, key + c.sd.length) !== c.sd) {
-            throw new Error('Deleted string does not match');
+            throw new Error("Deleted string does not match (" + debugDeleteOp + ")");
           }
           parent[parentkey] = elem.slice(0, key) + elem.slice(key + c.sd.length);
         } else if (c.li !== void 0 && c.ld !== void 0) {

@@ -725,7 +725,7 @@
     };
 
     Doc.prototype.flush = function() {
-      if (!(this.connection.state === 'ok' && this.inflightOp === null && this.pendingOp !== null)) {
+      if (!(this.connection.state === 'ok' && this.state === 'open' && this.inflightOp === null && this.pendingOp !== null)) {
         return;
       }
       this.inflightOp = this.pendingOp;
