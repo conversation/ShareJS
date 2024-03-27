@@ -126,6 +126,28 @@ class Doc
         @meta = msg.meta if msg.meta
         @version = msg.v if msg.v?
 
+        # Apply any server ops that were received in between requesting the document
+        # to open and the open being acknowledged/successful
+        serverOpVs = Object.keys(@serverOps).map (v) -> parseInt(v)
+        serverOpMaxV = Math.max(serverOpVs...)
+
+        versionRange = [(@version)..Math.max(serverOpMaxV, (@version))]
+
+        if serverOpMaxV >= @version
+          for v in versionRange
+            docOp = @serverOps[v]
+
+            # Transform any inflight and pending ops by the queued server ops before
+            # sending them to the server
+            if @inflightOp != null
+              [@inflightOp, docOp] = @_xf @inflightOp, docOp
+            if @pendingOp != null
+              [@pendingOp, docOp] = @_xf @pendingOp, docOp
+              
+            @version++
+            # Apply the op to @snapshot and trigger any event listeners
+            @_otApply docOp, true
+
         # Resend any previously queued operation.
         if @inflightOp
           response =
@@ -215,22 +237,26 @@ class Doc
         return if msg.v < @version
 
         return @emit 'error', "Expected docName '#{@name}' but got #{msg.doc}" unless msg.doc == @name
-        return @emit 'error', "Expected version #{@version} but got #{msg.v}" unless msg.v == @version
-
-    #    p "if: #{i @inflightOp} pending: #{i @pendingOp} doc '#{@snapshot}' op: #{i msg.op}"
 
         op = msg.op
-        @serverOps[@version] = op
+        @serverOps[msg.v] = op
 
-        docOp = op
-        if @inflightOp != null
-          [@inflightOp, docOp] = @_xf @inflightOp, docOp
-        if @pendingOp != null
-          [@pendingOp, docOp] = @_xf @pendingOp, docOp
-          
-        @version++
-        # Finally, apply the op to @snapshot and trigger any event listeners
-        @_otApply docOp, true
+        # Only process ops if we've received the open message back from the server.
+        #
+        # If the document isn't open yet, processing the server ops gets delayed
+        # until the open message is received (see `when msg.open == true` branch above)
+        if @state == 'open'
+          return @emit 'error', "Expected version #{@version} but got #{msg.v}" unless msg.v == @version
+
+          docOp = op
+          if @inflightOp != null
+            [@inflightOp, docOp] = @_xf @inflightOp, docOp
+          if @pendingOp != null
+            [@pendingOp, docOp] = @_xf @pendingOp, docOp
+            
+          @version++
+          # Finally, apply the op to @snapshot and trigger any event listeners
+          @_otApply docOp, true
 
       when msg.meta
         {path, value} = msg.meta
