@@ -276,7 +276,7 @@ class Doc
   # Only one op can be in-flight at a time, so if an op is already on its way then
   # this method does nothing.
   flush: =>
-    return unless @connection.state == 'ok' and @inflightOp == null and @pendingOp != null
+    return unless @connection.state == 'ok' and @state == 'open' and @inflightOp == null and @pendingOp != null
 
     # Rotate null -> pending -> inflight
     @inflightOp = @pendingOp
