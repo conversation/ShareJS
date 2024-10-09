@@ -13,17 +13,13 @@
 
 if WEB?
   types = exports.types
-  {BCSocket, SockJS, WebSocket} = window
-  if BCSocket
-    socketImpl = 'channel'
+  {SockJS, WebSocket} = window
+  if SockJS
+    socketImpl = 'sockjs'
   else
-    if SockJS
-      socketImpl = 'sockjs'
-    else
-      socketImpl = 'websocket'
+    socketImpl = 'websocket'
 else
   types = require '../types'
-  {BCSocket} = require 'browserchannel'
   Doc = require('./doc').Doc
   WebSocket = require 'ws'
   ReconnectingWebSocket = WebSocket
@@ -45,10 +41,8 @@ class Connection
     if host.match /^wss?:/ then socketImpl = 'websocket'
 
     @socket = switch socketImpl
-      when 'channel' then new BCSocket(host, reconnect:true)
       when 'sockjs' then new ReconnectingWebSocket(host, SockJS)
-      when 'websocket' then new ReconnectingWebSocket(host)
-      else new BCSocket(host, reconnect:true)
+      else new ReconnectingWebSocket(host)
 
     @socket.onmessage = (msg) =>
       msg = JSON.parse(msg.data) if socketImpl in ['sockjs', 'websocket']
