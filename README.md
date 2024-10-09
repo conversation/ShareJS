@@ -38,6 +38,10 @@ If you need to re-compile the web client code, just run `npm install` again, or 
 Running tests
 -------------
 
+If you didn't already:
+
+    createdb sharejs_example
+
 This project uses a pretty old version of nodeunit, but all tests can easily be run with:
 
     npm run test

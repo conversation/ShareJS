@@ -23,7 +23,6 @@ modules = [
   'events'
   'rest'
   'rest_base'
-  'browserchannel'
   'sockjs'
   'websocket'
 

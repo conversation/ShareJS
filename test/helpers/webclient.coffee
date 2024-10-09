@@ -11,7 +11,6 @@ fs = require 'fs'
 
 window = {}
 window.io = require 'socket.io-client'
-window.BCSocket = require('browserchannel').BCSocket
 
 for script in ['share', 'json']
   script = "#{script}.uncompressed" if TEST_UNCOMPRESSED
