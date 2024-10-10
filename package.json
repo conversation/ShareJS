@@ -19,7 +19,6 @@
     "socket.io": "2.5.0",
     "socket.io-client": "2.4.0",
     "ws": "0.4.32",
-    "connect": "<3.x",
     "request": ">= 2.1.1",
     "coffee-script": "1.7.0",
     "hat": "*"
