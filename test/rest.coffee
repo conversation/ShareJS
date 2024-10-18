@@ -3,6 +3,7 @@ testCase = require('nodeunit').testCase
 
 util = require 'util'
 
+express = require 'express'
 server = require '../src/server'
 types = require '../src/types'
 
@@ -28,7 +29,8 @@ module.exports = testCase
     # At least this way we'll get a stack trace.
     try
       @model = server.createModel options
-      @server = server options, @model
+      app = express()
+      @server = server.attach(app, options, @model)
       @server.listen =>
         @port = @server.address().port
         callback()
