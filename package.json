@@ -13,6 +13,7 @@
   "homepage": "",
   "author": "Joseph Gentle <josephg@gmail.com>",
   "dependencies": {
+    "express": "^4.8.0",
     "pg": "7.4.0",
     "pg-native": "3.0.1",
     "sockjs": ">= 0.3.1",
@@ -24,7 +25,6 @@
     "hat": "*"
   },
   "devDependencies": {
-    "express": "~ 3.x",
     "optimist": ">= 0.2.4",
     "nodeunit": "0.9.0",
     "shelljs": "0.1.4",

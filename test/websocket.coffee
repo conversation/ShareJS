@@ -6,6 +6,7 @@ testCase = require('nodeunit').testCase
 assert = require 'assert'
 WebSocketClient = require('websocket').client;
 {EventEmitter} = require('events')
+express = require 'express'
 server = require '../src/server'
 types = require '../src/types'
 
@@ -79,7 +80,8 @@ module.exports = testCase
 
     try
       @model = server.createModel options
-      @server = server options, @model
+      app = express()
+      @server = server.attach(app, options, @model)
 
       @server.listen =>
         @name = 'testingdoc'

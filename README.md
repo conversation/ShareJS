@@ -54,17 +54,17 @@ There are two ways to run a sharejs server:
 1. Embedded in a node.js server app:
 
     ```javascript
-    var connect = require('connect'),
+    var express = require('express'),
+        logger = require('morgan'),
         sharejs = require('share').server;
 
-    var app = connect(
-          connect.logger(),
-          connect.static(__dirname + '/my_html_files')
-        );
+    var app = express();
+    app.use(logger('dev'));
+    app.use(express.static(__dirname + '/my_html_files'));
 
     var options = {db: {type: 'none'}}; // See docs for options. {type: 'pg'} to enable persistance.
 
-    // Attach the sharejs REST and Socket.io interfaces to the server
+    // Attach the sharejs interfaces to the server
     server = sharejs.attach(app, options);
 
     server.listen(9000);
@@ -72,7 +72,7 @@ There are two ways to run a sharejs server:
     ```
     The above script will start up a ShareJS server on port 9000 which hosts static content from the `my_html_files` directory. See [bin/exampleserver](https://github.com/josephg/ShareJS/blob/master/bin/exampleserver) for a more complex configuration example.
 
-    > See the [Connect](http://senchalabs.github.com/connect/) or [Express](http://expressjs.com/) documentation for more complex routing.
+    > See the [Express](http://expressjs.com/) documentation for more complex routing.
 
 2. From the command line:
 

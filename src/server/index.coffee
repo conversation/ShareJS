@@ -1,6 +1,6 @@
 # The server module...
 
-connect = require 'connect'
+express = require 'express'
 http = require 'http'
 
 Model = require './model'
@@ -10,42 +10,31 @@ rest = require './rest'
 sockjs = require './sockjs'
 websocket = require './websocket'
 
-# Create an HTTP server and attach whatever frontends are specified in the options.
-#
-# The model will be created based on options if it is not specified.
-module.exports = create = (options, model = createModel(options)) ->
-  attach(connect(), options, model)
-
-# Create an OT document model attached to a database.
-create.createModel = createModel = (options) ->
+createModel = (options) ->
   dbOptions = options?.db
 
   db = createDb dbOptions
   new Model db, options
 
-# Attach the OT server frontends to the provided Node HTTP server. Use this if you
-# already have a `connect` compatible server and want to make some URL paths do OT.
+# Use this method to attach ShareJS to your http server.
 #
-# The options object specifies options for everything. If settings are missing,
-# defaults will be provided.
+# For example, using express (4+):
 #
-# Set options.rest == null or options.socketio == null to turn off that frontend.
+# import express from "express"
+# import { server } from "share"
 #
-# This method always returns a http.Server, which should be used to listen
+# const app = express()
+# const options = { your: { options: "here" }}
+# server.attach(app, options)
 #
-# eg.
-#   var app = express();
-#   var server = sharejs.server.attach(app);
-#   server.listen(port);
-#
-create.attach = attach = (server, options, model = createModel(options)) ->
+attach = (server, options, model = createModel(options)) ->
   options ?= {}
   options.staticpath ?= '/share'
 
   server.model = model
   server.on 'close', -> model.closeDb()
 
-  server.use options.staticpath, connect.static("#{__dirname}/../../webclient") if options.staticpath != null
+  server.use options.staticpath, express.static("#{__dirname}/../../webclient") if options.staticpath != null
 
   createAgent = require('./useragent') model, options
 
@@ -65,3 +54,8 @@ create.attach = attach = (server, options, model = createModel(options)) ->
   websocket.attach(server, createAgent, options.websocket or {}) if options.websocket?
 
   server
+
+module.exports = {
+  createModel,
+  attach,
+}

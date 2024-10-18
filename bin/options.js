@@ -42,9 +42,6 @@ module.exports = {
 	  // 'transports': ['xhr-polling', 'flashsocket']
 	},
 
-  // Browserchannel server options. Set browserChannel:null to disable browserchannel.
-  browserChannel: {},
-
   // Websocket server options. Set websocket:null to disable websocket support.
   websocket: {
     headers: { "Access-Control-Allow-Origin": "*" },
