@@ -5,10 +5,10 @@
 #
 # Example usage:
 #
-#     var connect = require('connect');
+#     var express = require('express');
 #     var share   = require('share').server;
 #
-#     var server = connect(connect.logger());
+#     var app = express();
 #
 #     var options = {
 #       db: {
@@ -18,8 +18,8 @@
 #       }
 #     };
 #
-#     share.attach(server, options);
-#     server.listen(9000);
+#     app.set('port', 9000);
+#     share.attach(app, options);
 #
 # You can run bin/setup_pg to create the SQL tables initially.
 
