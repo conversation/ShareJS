@@ -2,6 +2,7 @@
 
 testCase = require('nodeunit').testCase
 
+express = require 'express'
 server = require '../src/server'
 types = require '../src/types'
 
@@ -25,7 +26,8 @@ genTests = (client) -> testCase
       auth: (client, action) => @auth client, action
 
     @model = server.createModel options
-    @server = server options, @model
+    app = express()
+    @server = server.attach(app, options, @model)
 
     @server.listen =>
       @port = @server.address().port

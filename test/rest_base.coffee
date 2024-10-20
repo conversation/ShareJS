@@ -1,5 +1,6 @@
 # Tests for the REST-ful interface (base-option)
 
+express = require 'express'
 server = require '../src/server'
 {fetch} = require './helpers'
 
@@ -15,7 +16,8 @@ module.exports =
 
     try
       model = server.createModel options
-      server = server options, model
+      app = express()
+      server = server.attach(app, options, model)
       server.listen =>
         port = server.address().port
         console.log port
