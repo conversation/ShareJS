@@ -34,17 +34,20 @@ makeUgly = (infile, outfile) ->
   # Uglify compile the JS
   source = cat infile
 
-  {parser, uglify} = require 'uglify-js'
+  UglifyJS = require 'uglify-js'
 
-  opts =
-    defines:
-      WEB: ['name', 'true']
+  unminifiedCode = fs.readFileSync(infile, "utf8")
 
-  ast = parser.parse source
-  ast = uglify.ast_lift_variables ast
-  ast = uglify.ast_mangle ast, opts
-  ast = uglify.ast_squeeze ast
-  code = uglify.gen_code ast
+  result = UglifyJS.minify(unminifiedCode, {
+    compress: {
+      global_defs: {
+        "WEB": true
+      },
+      hoist_vars: true
+    }
+  })
+
+  code = result.code
 
   smaller = Math.round((1 - (code.length / source.length)) * 100)
 
