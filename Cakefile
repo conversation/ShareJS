@@ -32,8 +32,6 @@ task 'build', 'Build the .js files', ->
 
 makeUgly = (infile, outfile) ->
   # Uglify compile the JS
-  source = cat infile
-
   UglifyJS = require 'uglify-js'
 
   unminifiedCode = fs.readFileSync(infile, "utf8")
@@ -49,7 +47,7 @@ makeUgly = (infile, outfile) ->
 
   code = result.code
 
-  smaller = Math.round((1 - (code.length / source.length)) * 100)
+  smaller = Math.round((1 - (code.length / unminifiedCode.length)) * 100)
 
   code.to outfile
 
