@@ -49,7 +49,7 @@ makeUgly = (infile, outfile) ->
 
   smaller = Math.round((1 - (code.length / unminifiedCode.length)) * 100)
 
-  code.to outfile
+  fs.writeFileSync(outfile, code, "utf8")
 
   console.log "Uglified: #{smaller}% smaller (#{code.length} bytes} written to #{outfile}"
 
