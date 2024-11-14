@@ -6,7 +6,7 @@ sessionHandler = require('./session').handler
 STATISTICS_INTERVAL = 10000 # 10 seconds
 CLIENT_TIMEOUT = 30000 # 30 seconds
 
-wrapSession = (conn) ->
+wrapSession = (conn, req) ->
   wrapper = new EventEmitter
   wrapper.abort = -> conn.close()
   wrapper.stop = -> conn.close()
@@ -28,7 +28,7 @@ wrapSession = (conn) ->
     else
       wrapper.emit 'message', msg
 
-  wrapper.headers = conn.upgradeReq.headers
+  wrapper.headers = req.headers
   # TODO - I don't think this is the right way to get the address
   wrapper.address = conn._socket.server._connectionKey?
   wrapper
@@ -36,9 +36,9 @@ wrapSession = (conn) ->
 exports.attach = (server, createAgent, options) ->
   options.prefix or= '/websocket'
   wss = new WebSocketServer {server: server, path: options.prefix, headers: options.headers}
-  wss.on 'connection', (conn) ->
+  wss.on 'connection', (conn, req) ->
     conn.isAlive = true
-    sessionHandler wrapSession(conn), createAgent
+    sessionHandler wrapSession(conn, req), createAgent
 
   if !!options.trackStats
     setInterval ->
