@@ -43,7 +43,7 @@ exports.attach = (server, createAgent, options) ->
   if !!options.trackStats
     setInterval ->
       options.trackStats
-        activeWebsocketConnections: wss.clients.length
+        activeWebsocketConnections: wss.clients.size
     , STATISTICS_INTERVAL
 
   # Clients send out a heartbeat at 10 second intervals, if
