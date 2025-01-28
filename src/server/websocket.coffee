@@ -43,7 +43,7 @@ exports.attach = (server, createAgent, options) ->
   if !!options.trackStats
     setInterval ->
       options.trackStats
-        activeWebsocketConnections: wss.clients.length
+        activeWebsocketConnections: wss.clients.size
     , STATISTICS_INTERVAL
 
   # Clients send out a heartbeat at 10 second intervals, if
@@ -61,7 +61,7 @@ exports.attach = (server, createAgent, options) ->
   # event, the client would have already established a new connection by the time
   # the server terminates it from it's side.
   setInterval ->
-    for client in wss.clients
+    wss.clients.forEach (client) ->
       client.terminate() if !client.isAlive
       client.isAlive = false
   , CLIENT_TIMEOUT
