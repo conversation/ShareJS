@@ -61,7 +61,7 @@ exports.attach = (server, createAgent, options) ->
   # event, the client would have already established a new connection by the time
   # the server terminates it from it's side.
   setInterval ->
-    for client in wss.clients
+    wss.clients.forEach (client) ->
       client.terminate() if !client.isAlive
       client.isAlive = false
   , CLIENT_TIMEOUT
