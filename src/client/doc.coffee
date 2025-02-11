@@ -231,8 +231,7 @@ class Doc
         # We got a new op from the server.
         # msg is {doc:, op:, v:}
 
-        # There is a bug in socket.io (produced on firefox 3.6) which causes messages
-        # to be duplicated sometimes.
+        # There is a bug which causes messages to be duplicated sometimes.
         # We'll just silently drop subsequent messages.
         return if msg.v < @version
 

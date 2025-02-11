@@ -10,7 +10,6 @@ TEST_UNCOMPRESSED = false
 fs = require 'fs'
 
 window = {}
-window.io = require 'socket.io-client'
 
 for script in ['share', 'json']
   script = "#{script}.uncompressed" if TEST_UNCOMPRESSED

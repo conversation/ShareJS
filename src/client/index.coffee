@@ -4,9 +4,6 @@
 # It works from both a node.js context and a web context (though in the latter case,
 # it needs to be compiled to work.)
 #
-# It should become a little nicer once I start using more of the new RPC features added
-# in socket.io 0.7.
-#
 # Note that anything declared in the global scope here is shared with other files
 # built by closure. Be careful what you put in this namespace.
 

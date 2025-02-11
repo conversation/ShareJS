@@ -105,8 +105,7 @@ genTests = (client, dbType) -> testCase
           # This test consumes open file handles. If you want to set
           # it higher, you need to run:
           #  % ulimit -n 8096
-          # to increase the OS limit. This happens because of a bug in
-          # socket.io.
+          # to increase the OS limit.
           if num < 30
             nowOrLater more
           else

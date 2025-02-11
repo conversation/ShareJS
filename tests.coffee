@@ -36,8 +36,10 @@ modules = [
 
 exports[module] = require "./test/#{module}" for module in modules
 
-# This is a little hack to get around the lack of cleanup done by socket.io. It should terminate
+# This is a little hack to get around the lack of cleanup done by sockjs. It should terminate
 # the node.js process 2 seconds after all the tests are complete.
+#
+# When sockjs is removed, this can be removed as well
 exports.cleanup = (test) ->
   test.done()
   setTimeout (-> process.exit(0)), 2000
