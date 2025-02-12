@@ -17,7 +17,7 @@ options = require('./options') || {};
 
 console.log("ShareJS server v" + sharejs.version);
 
-// Attach the sharejs REST and Socket.io interfaces to the server
+// Attach the sharejs REST and websocket interfaces to the server
 var server = sharejs.server.attach(app, options);
 
 var port = options.port || 8000;

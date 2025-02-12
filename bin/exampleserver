@@ -42,7 +42,7 @@ console.log("Options: ", options);
 
 var port = argv.p;
 
-// Attach the sharejs REST and Socket.io interfaces to the server
+// Attach the sharejs REST and websocket interfaces to the server
 var server = sharejs.server.attach(app, options);
 
 app.get('/pad/?', function(req, res, next) {

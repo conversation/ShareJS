@@ -22,6 +22,6 @@ testRunning = (url, port, callback) ->
   post.end '{"type":"simple"}'
   
   
-  # Also, open the DB using socket.io and make a document
+  # Open the DB and make a document
   client = new client.Connection 'localhost', port, url
   client.

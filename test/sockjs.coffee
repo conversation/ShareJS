@@ -379,10 +379,6 @@ module.exports = testCase
 
         test.strictEqual typeof agent.headers, 'object'
 
-        # I can't edit the headers using socket.io-agent's API. I'd test the default headers in this
-        # object, but the default XHR headers aren't part of socket.io's API, so they could change between
-        # versions and break the test.
-
         # TODO - Get SockJS to put user-agent header in the connection
         test.strictEqual agent.headers['user-agent'], undefined #'node.js'
 

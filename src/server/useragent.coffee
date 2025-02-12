@@ -28,11 +28,6 @@ module.exports = (model, options) ->
       # Should be manually set by the auth function.
       @name = null
 
-      # We have access to these with socket.io, but I'm not sure we can support
-      # these properties on the REST API or sockjs, etc.
-      #xdomain: data.xdomain
-      #secure: data.secure
-
     # This is a helper method which wraps auth() above. It creates the action and calls
     # auth. If authentication succeeds, acceptCallback() is called if it exists. otherwise
     # userCallback(true) is called.
