@@ -14,7 +14,7 @@
   "author": "Joseph Gentle <josephg@gmail.com>",
   "dependencies": {
     "express": "^4.8.0",
-    "pg": "7.4.0",
+    "pg": "^8.16.0",
     "pg-native": "3.0.1",
     "sockjs": "0.3.24",
     "ws": "5.2.4",
