@@ -2,7 +2,7 @@ This is a bunch of little demo apps using Share.js.
 
 Launch the example sharejs server with
 
-    % bin/exampleserver
+    % bin/demoserver
 
 
 readonly
