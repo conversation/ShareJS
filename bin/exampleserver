@@ -37,7 +37,7 @@ var options = {
   }
 };
 
-console.log("ShareJS example server v" + sharejs.version);
+console.log("ShareJS example server v" + sharejs.version + " using memory store");
 console.log("Options: ", options);
 
 var port = argv.p;
