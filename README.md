@@ -22,16 +22,22 @@ Install required packages, and compile the web client code:
 
     npm install
 
-Run the simple example server which includes basic clients with:
+Run the simple example server with demos which uses a non-persistent memory store:
 
-    ./bin/exampleserver
+    ./bin/demoserver
 
-Run a standalone example server by first creating a postgres database, then running the example server itself:
+There's also an example with demos that persists the data to postgres:
+
+    ./bin/demoserver-pg
+
+And finally a standalone example server without the demos.
+
+First create a postgres database, then the server:
 
     createdb sharejs_example
     ./bin/sharejs
 
-See `bin/options.js` for how to configure the example server.
+See `bin/options.js` for how to configure the standalone example server.
 
 If you need to re-compile the web client code, just run `npm install` again, or alternatively you can use `npm run prepublish`.
 
@@ -70,7 +76,7 @@ There are two ways to run a sharejs server:
     server.listen(9000);
     console.log('Server running at http://127.0.0.1:9000/');
     ```
-    The above script will start up a ShareJS server on port 9000 which hosts static content from the `my_html_files` directory. See [bin/exampleserver](https://github.com/josephg/ShareJS/blob/master/bin/exampleserver) for a more complex configuration example.
+    The above script will start up a ShareJS server on port 9000 which hosts static content from the `my_html_files` directory. See [bin/demoserver](https://github.com/conversation/ShareJS/blob/master/bin/demoserver) for a more complex configuration example.
 
     > See the [Express](http://expressjs.com/) documentation for more complex routing.
 
@@ -78,14 +84,6 @@ There are two ways to run a sharejs server:
 
         # sharejs
     Configuration is pulled from a configuration file that can't be easily edited at the moment. For now, I recommend method #1 above.
-
-3. If you are just mucking around, run:
-
-        # sharejs-exampleserver
-
-    This will run a simple server on port 8000, and host all the example code there. Run it and check out http://localhost:8000/ . The example server stores everything in ram, so don't get too attached to your data.
-
-    > If you're running sharejs from source, you can launch the example server by running `bin/exampleserver`.
 
 
 Putting Share.js on your website

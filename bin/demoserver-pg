@@ -20,7 +20,14 @@ var app = express();
 app.use(express.static(__dirname + '/../examples'));
 
 var options = {
-  db: {type: 'none'},
+  db: {
+    type: 'pg',
+    schema: 'public',
+    operations_table: 'operations',
+    snapshot_table: 'snapshots',
+    connectionString: process.platform == "darwin" ? "/tmp" : "/var/run/postgresql",
+    create_tables_automatically: true
+  },
   websocket: {
     prefix: '/websocket',
     trackStats: function(stats) {
@@ -37,7 +44,7 @@ var options = {
   }
 };
 
-console.log("ShareJS example server v" + sharejs.version);
+console.log("ShareJS example server v" + sharejs.version + " using postgres");
 console.log("Options: ", options);
 
 var port = argv.p;
