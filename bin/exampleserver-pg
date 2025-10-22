@@ -1,0 +1,74 @@
+#!/usr/bin/env node
+
+// This is a simple example sharejs server which hosts the sharejs
+// examples in examples/.
+//
+// It demonstrates a few techniques to get different application behaviour.
+
+require('coffee-script');
+var express = require('express'),
+  sharejs = require('../src'),
+  hat = require('hat').rack(32, 36);
+
+var argv = require('optimist').
+  usage("Usage: $0 [-p portnum]").
+  default('p', 8000).
+  alias('p', 'port').
+  argv;
+
+var app = express();
+app.use(express.static(__dirname + '/../examples'));
+
+var options = {
+  db: {
+    type: 'pg',
+    schema: 'public',
+    operations_table: 'operations',
+    snapshot_table: 'snapshots',
+    connectionString: process.platform == "darwin" ? "/tmp" : "/var/run/postgresql",
+    create_tables_automatically: true
+  },
+  websocket: {
+    prefix: '/websocket',
+    trackStats: function(stats) {
+      console.log("Tracking stats:", JSON.stringify(stats));
+    }
+  },
+  auth: function(client, action) {
+    // This auth handler rejects any ops bound for docs starting with 'readonly'.
+    if (action.name === 'submit op' && action.docName.match(/^readonly/)) {
+      action.reject();
+    } else {
+      action.accept();
+    }
+  }
+};
+
+console.log("ShareJS example server v" + sharejs.version + " using postgres");
+console.log("Options: ", options);
+
+var port = argv.p;
+
+// Attach the sharejs REST and websocket interfaces to the server
+var server = sharejs.server.attach(app, options);
+
+app.get('/pad/?', function(req, res, next) {
+  var docName;
+  docName = hat();
+  res.writeHead(303, {location: '/pad/pad.html#' + docName});
+  res.write('');
+  res.end();
+});
+
+app.get('/?', function(req, res, next) {
+  res.writeHead(302, {location: '/index.html'});
+  res.end();
+});
+server.listen(port);
+console.log("Demos running at http://localhost:" + port);
+
+process.title = 'sharejs'
+process.on('uncaughtException', function (err) {
+  console.error('An error has occurred. Please file a ticket here: https://github.com/josephg/ShareJS/issues');
+  console.error('Version ' + sharejs.version + ': ' + err.stack);
+});
