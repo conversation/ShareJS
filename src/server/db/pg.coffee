@@ -88,18 +88,31 @@ module.exports = PgDb = (options) ->
       callback? error.message
 
   @create = (docName, docData, callback) ->
-    sql = """
-      INSERT INTO #{snapshot_table} ("doc", "v", "snapshot", "meta", "type", "created_at")
-        VALUES ($1, $2, ($3)::jsonb, $4, $5, now() at time zone 'UTC')
+    # Temporarily guard against improper constraints allowing
+    # multiple snapshots to be inserted for a given docName
+    check_snapshots_sql = """
+      SELECT count("doc") FROM #{snapshot_table}
+      WHERE "doc" = $1
     """
-    values = [docName, docData.v, JSON.stringify(docData.snapshot), docData.meta, docData.type]
-    client.query sql, values, (error, result) ->
-      if !error?
-        callback?()
-      else if error.toString().match "duplicate key value violates unique constraint"
+
+    client.query check_snapshots_sql, [docName], (error, result) ->
+      if !error? and result.rows.length > 0 and result.rows[0].count > 0
         callback? "Document already exists"
-      else
+      else if error?
         callback? error?.message
+      else
+        sql = """
+          INSERT INTO #{snapshot_table} ("doc", "v", "snapshot", "meta", "type", "created_at")
+            VALUES ($1, $2, ($3)::jsonb, $4, $5, now() at time zone 'UTC')
+        """
+        values = [docName, docData.v, JSON.stringify(docData.snapshot), docData.meta, docData.type]
+        client.query sql, values, (error, result) ->
+          if !error?
+            callback?()
+          else if error.toString().match "duplicate key value violates unique constraint"
+            callback? "Document already exists"
+          else
+            callback? error?.message
 
   @delete = (docName, dbMeta, callback) ->
     sql = """
