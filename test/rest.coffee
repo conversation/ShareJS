@@ -7,7 +7,7 @@ express = require 'express'
 server = require '../src/server'
 types = require '../src/types'
 
-{makePassPart, newDocName, fetch} = require './helpers'
+{applyOps, makePassPart, newDocName, fetch} = require './helpers'
 
 # Frontend tests
 module.exports = testCase
@@ -83,6 +83,51 @@ module.exports = testCase
           test.strictEqual headers['content-type'], 'text/plain'
           test.deepEqual data, 'hi'
           test.done()
+
+  'GET /doc/:name/versions returns [] for a document with no ops': (test) ->
+    @model.create @name, 'simple', =>
+      fetch 'GET', @port, "/doc/#{@name}/versions", null, (res, data, headers) ->
+        test.strictEqual res.statusCode, 200
+        test.strictEqual headers['content-type'], 'application/json'
+        test.deepEqual data, []
+        test.done()
+
+  'GET /doc/:name/versions returns the list of applied ops': (test) ->
+    @model.create @name, 'text', =>
+      applyOps @model, @name, 0, [
+          [{p: 0, i: 'h'}]
+          [{p: 1, i: 'i'}]
+          [{p: 2, i: ' '}]
+          [{p: 3, i: 't'}]
+          [{p: 4, i: 'h'}]
+          [{p: 5, i: 'i'}]
+          [{p: 6, i: 's'}]
+          [{p: 7, i: ' '}]
+          [{p: 8, i: 'i'}]
+          [{p: 9, i: 's'}]
+          [{p: 10, i: ' '}]
+          [{p: 11, i: 'd'}]
+          [{p: 12, i: 'o'}]
+          [{p: 13, i: 'g'}]
+        ], (error, data) =>
+          test.strictEqual error, null
+
+          fetch 'GET', @port, "/doc/#{@name}/versions?every=10", null, (res, data, headers) ->
+            test.strictEqual res.statusCode, 200
+            test.strictEqual headers['content-type'], 'application/json'
+
+            version1 = data[0]
+            version2 = data[1]
+
+            test.strictEqual version1.v, 10
+            test.strictEqual version1.type, 'text'
+            test.strictEqual version1.snapshot, 'hi this is'
+
+            test.strictEqual version2.v, 14
+            test.strictEqual version2.type, 'text'
+            test.strictEqual version2.snapshot, 'hi this is dog'
+
+            test.done()
 
   'PUT a document creates it': (test) ->
     fetch 'PUT', @port, "/doc/#{@name}", {type:'simple'}, (res, data) =>

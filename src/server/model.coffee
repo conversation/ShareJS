@@ -513,6 +513,7 @@ module.exports = Model = (db, options) ->
 
         buildVersions = (callback, ops, results = []) ->
           if ops.length
+            lastOpV = ops[ops.length - 1].v
             versionOps = ops.slice(0, opBatchAmount)
 
             try
@@ -521,7 +522,7 @@ module.exports = Model = (db, options) ->
                 docTemplate.snapshot = type.apply(docTemplate.snapshot, op.op)
                 docTemplate.meta = op.meta
 
-                if docTemplate.v % n is 0
+                if docTemplate.v % n is 0 or op.v is lastOpV
                   results.push({
                     v: docTemplate.v,
                     type: docTemplate.type.name,
